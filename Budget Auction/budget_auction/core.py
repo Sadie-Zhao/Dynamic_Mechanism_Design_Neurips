@@ -801,4 +801,4 @@ class BudgetSimulator:
             return bv.astype(jnp.float32), iv.astype(jnp.float32)
 
         bvs, ivs = jax.vmap(fn)(init_states, rollout_keys)  # (N, B), (N, B)
-        return float(jnp.mean(bvs)), float(jnp.mean(ivs))
+        return jnp.mean(bvs), jnp.mean(ivs)

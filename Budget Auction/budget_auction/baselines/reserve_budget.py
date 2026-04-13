@@ -105,6 +105,14 @@ class ReserveBudgetMechanism:
         return reserve_allocate_and_pay(state, report, auction, self.reserve_multiplier)
 
 
+# Register as a JAX pytree (multiplier is static aux, no array leaves)
+jax.tree_util.register_pytree_node(
+    ReserveBudgetMechanism,
+    lambda m: ([], m.reserve_multiplier),
+    lambda aux, leaves: ReserveBudgetMechanism(aux),
+)
+
+
 def run_reserve_budget_baseline(
     auction: BudgetAuction,
     reserve_multiplier: float = 0.5,

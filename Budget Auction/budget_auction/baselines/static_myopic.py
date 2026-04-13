@@ -102,6 +102,14 @@ class StaticMyopicMechanism:
         return myopic_allocate_and_pay(state, report, auction)
 
 
+# Register as an empty JAX pytree so it can be passed through jit-compiled functions
+jax.tree_util.register_pytree_node(
+    StaticMyopicMechanism,
+    lambda m: ([], None),
+    lambda aux, leaves: StaticMyopicMechanism(),
+)
+
+
 def run_static_myopic_baseline(
     auction: BudgetAuction,
     num_samples: int = 256,
