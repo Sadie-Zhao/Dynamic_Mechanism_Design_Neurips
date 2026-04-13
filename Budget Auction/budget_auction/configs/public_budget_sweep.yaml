@@ -1,0 +1,40 @@
+# Experiment 1: Public-state budget auction (sweep configuration)
+# Used for comparing variants A, B, C with multiple seeds
+experiment: public_budget
+
+# Environment
+n_buyers: 2
+n_goods: 1
+horizon: 5
+discount: 0.9
+initial_budget: 3.0
+
+# Mechanism variant: set via --variant CLI flag (A, B, or C)
+mechanism_variant: A   # override with --variant
+
+# Training
+num_outer_epochs: 3000
+outer_steps_per_epoch: 1
+lr_theta: 1.0e-4
+
+num_inner_steps: 400
+lr_w: 3.0e-4
+
+num_samples_train: 128
+
+# Loss weights
+alpha: 1.0e5
+beta: 1.0e3
+
+profit_goal: 1.5
+
+policy_hidden: 128
+residual_init_std: 1.0
+
+print_iter: 100
+
+early_stop: true
+tol: 0.05
+patience: 20
+
+output_dir: outputs/public_budget_sweep

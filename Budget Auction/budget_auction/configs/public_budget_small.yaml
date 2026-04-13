@@ -1,0 +1,46 @@
+# Experiment 1: Public-state budget auction (small scale for debugging/initial runs)
+experiment: public_budget
+
+# Environment
+n_buyers: 2
+n_goods: 1
+horizon: 5
+discount: 0.9
+initial_budget: 3.0
+
+# Mechanism variant: A (GBAM), B (richer history), or C (full history)
+mechanism_variant: A
+
+# Training (nested GD)
+num_outer_epochs: 2000
+outer_steps_per_epoch: 1
+lr_theta: 1.0e-4
+
+num_inner_steps: 300
+lr_w: 3.0e-4
+
+num_samples_train: 64
+
+# Loss weights
+alpha: 1.0e5       # regret penalty weight
+beta: 1.0e3        # IR penalty weight
+
+# Target profit (tune based on environment)
+# With T=5, B_i=3.0, types~U[0,1], single good: expected per-stage revenue ~0.3-0.5
+# Set profit_goal conservatively:
+profit_goal: 1.5
+
+# Policy network
+policy_hidden: 128
+residual_init_std: 1.0
+
+# Logging
+print_iter: 50
+
+# Early stopping
+early_stop: false
+tol: 0.1
+patience: 10
+
+# Output
+output_dir: outputs/public_budget_small
