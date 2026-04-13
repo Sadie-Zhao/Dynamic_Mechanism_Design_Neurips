@@ -187,8 +187,7 @@ def create_private_budget_multigood_auction(
     # Initial type sampler: uniform [0,1]^(B*G)
     sample_types_fn = make_box_sampler(types_low, types_high)
 
-    # Create auction — attach transition hyperparams as attributes via a thin wrapper
-    auction = BudgetAuction(
+    return BudgetAuction(
         num_horizons=horizon,
         num_buyers=B,
         num_goods=G,
@@ -208,10 +207,6 @@ def create_private_budget_multigood_auction(
         belief_priv_params=priv_params,
         d_pub=d_pub,
         d_priv=d_priv,
+        trans_base_rate=trans_base_rate,
+        trans_sigma_no=trans_sigma_no,
     )
-
-    # Attach transition hyperparams as plain Python attributes (not JAX fields)
-    object.__setattr__(auction, "trans_base_rate", trans_base_rate)
-    object.__setattr__(auction, "trans_sigma_no", trans_sigma_no)
-
-    return auction

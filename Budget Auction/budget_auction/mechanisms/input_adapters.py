@@ -96,14 +96,7 @@ def mechanism_network_A(
         hk.Linear(64),
     ])(report.reshape(B, G))                           # (B, 64)
 
-    # Encode public budget state (alpha, beta, t/T) -> broadcast to (B, 32)
-    budget_feat = jnp.concatenate([
-        state.alpha / auction.initial_budgets,          # (B,)
-        state.beta / auction.initial_budgets,           # (B,)
-        jnp.broadcast_to(t_norm, (B, 1)).squeeze(-1),  # (B,) via broadcast
-    ], axis=-1)                                        # shape is wrong; fix below
-
-    # Per-buyer: [alpha_i/B_i, beta_i/B_i, t/T]
+    # Per-buyer public-state features: [alpha_i/B_i, beta_i/B_i, t/T]
     alpha_norm = (state.alpha / auction.initial_budgets).reshape(B, 1)  # (B, 1)
     beta_norm = (state.beta / auction.initial_budgets).reshape(B, 1)    # (B, 1)
     t_feat = jnp.broadcast_to(t_norm, (B, 1))                          # (B, 1)

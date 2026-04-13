@@ -145,6 +145,10 @@ class BudgetAuction:
     d_pub: int = struct.field(pytree_node=False, default=64)
     d_priv: int = struct.field(pytree_node=False, default=128)
 
+    # Transition hyperparams (Exp 2 logit-space Gaussian; harmless defaults for Exp 1)
+    trans_base_rate: float = struct.field(pytree_node=False, default=1.0)
+    trans_sigma_no: float = struct.field(pytree_node=False, default=0.01)
+
     # ---- Initial state helpers ----
     def get_initial_state(self, key: jax.random.PRNGKey) -> BudgetState:
         return self.init_state_function(self, key)
