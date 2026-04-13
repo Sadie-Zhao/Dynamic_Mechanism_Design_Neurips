@@ -200,8 +200,11 @@ class BudgetAuction:
         beta: jnp.ndarray,           # (B,)
     ) -> jnp.ndarray:
         """Public observation token: time, allocations, normalised alpha/beta."""
+        t_norm = jnp.reshape(
+            jnp.asarray(t, jnp.float32) / max(1, self.num_horizons - 1), (1,)
+        )
         parts = [
-            jnp.array([t / max(1, self.num_horizons - 1)], dtype=jnp.float32),
+            t_norm,
             allocation_t.reshape(-1).astype(jnp.float32),              # (B*G,)
             (alpha / self.initial_budgets).astype(jnp.float32),        # (B,)
             (beta / self.initial_budgets).astype(jnp.float32),         # (B,)
@@ -217,14 +220,16 @@ class BudgetAuction:
         beta_i: jnp.ndarray,         # (1,) or scalar
     ) -> jnp.ndarray:
         """Private observation token for buyer i: time, next type, report, budget slack."""
+        t_norm = jnp.reshape(
+            jnp.asarray(t, jnp.float32) / max(1, self.num_horizons - 1), (1,)
+        )
+        B_i = jnp.asarray(self.initial_budgets[0], jnp.float32)
         parts = [
-            jnp.array([t / max(1, self.num_horizons - 1)], dtype=jnp.float32),
+            t_norm,
             type_i_next.reshape(-1).astype(jnp.float32),               # (G,)
             report_it.reshape(-1).astype(jnp.float32),                 # (G,)
-            jnp.array([float(alpha_i) / float(self.initial_budgets[0])],
-                      dtype=jnp.float32),                               # (1,)
-            jnp.array([float(beta_i) / float(self.initial_budgets[0])],
-                      dtype=jnp.float32),                               # (1,)
+            jnp.reshape(jnp.asarray(alpha_i, jnp.float32) / B_i, (1,)),  # (1,)
+            jnp.reshape(jnp.asarray(beta_i, jnp.float32) / B_i, (1,)),   # (1,)
         ]
         return jnp.concatenate(parts, axis=0)  # (1 + 2G + 2,)
 
