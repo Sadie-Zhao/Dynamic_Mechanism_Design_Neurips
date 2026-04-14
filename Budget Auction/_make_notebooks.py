@@ -28,288 +28,404 @@ def notebook(cells):
 
 
 # ---------------------------------------------------------------------------
-# Shared HP search cells (parametrised by experiment label and save path)
+# 3-stage HP search + final training cells
 # ---------------------------------------------------------------------------
 
-def hp_search_cells(exp_label, hp_save_dir_expr, final_save_dir_expr):
-    """Return the list of cells that implement the HP search + final training pipeline.
-
-    Parameters
-    ----------
-    exp_label : str
-        Short label used in plot titles, e.g. 'Exp 1' or 'Exp 2'.
-    hp_save_dir_expr : str
-        Python expression (string literal) for the HP search output directory,
-        e.g. "'outputs/public_budget/hparam_search'".
-    final_save_dir_expr : str
-        Python expression for the final model output directory,
-        e.g. "f'outputs/public_budget/seed{SEED}/optimal'".
+def hp_search_cells(exp_label, hp_save_dir_expr, final_save_dir_expr,
+                    profit_goal_values):
     """
-    return [
-        # ----------------------------------------------------------------
-        md(f"## Hyperparameter Search\n\n"
-           "Systematically explores hyperparameter combinations within a configurable time budget "
-           "(default **12 hours**). Results are saved to disk after every trial so the search can "
-           "be resumed if interrupted. After the search, the best configuration is used to retrain "
-           "for the full epoch budget, and all three variants A / B / C are compared under the "
-           "same optimal hyperparameters.\n\n"
-           "**Search space:** `lr_theta`, `lr_w`, `num_inner_steps`, `alpha_weight`, `beta_weight`  \n"
-           "**Scoring:** maximize revenue subject to explicit IC, IR, budget, and IR-rate tolerances.\n\n"
-           "> All thresholds enforce constraints (not soft regularizers): a trial is penalized only when "
-           "it exceeds the tolerance, and the objective is revenue alone."),
+    exp_label          : 'Exp 1' or 'Exp 2'
+    hp_save_dir_expr   : Python expression string, e.g. "'outputs/public_budget/hparam_search'"
+    final_save_dir_expr: Python expression string, e.g. "f'outputs/public_budget/seed{SEED}/optimal'"
+    profit_goal_values : list of floats to search over, e.g. [0.8, 1.2, 1.5, 2.0]
 
-        # ----------------------------------------------------------------
+    Stage design
+    ------------
+    Stage 1  Anchor lr_theta × lr_w            (12 trials, fast)
+             Fixed: alpha_weight=1e5, beta_weight=1e3,
+                    profit_goal=cfg default, num_inner_steps=150
+             Rationale: Adam's adaptive scaling makes LRs semi-independent of
+             loss magnitudes — good to lock down first without the confound of
+             varying weights.
+
+    Stage 2  Joint search of profit_goal × alpha_weight × beta_weight  (36 trials)
+             Fixed: lr_theta*, lr_w* from Stage 1, num_inner_steps=200
+             Rationale: these three are tightly coupled — alpha_weight must
+             scale with profit_goal to keep the IC penalty competitive with the
+             revenue-gap term.  Must be searched together.
+
+    Stage 3  Fine-tune num_inner_steps          (4 trials, cheap)
+             Fixed: everything from Stage 1 + 2
+             Rationale: inner-step count depends on how hard the resulting
+             mechanism is to break (determined by profit_goal + weights).
+             Fine-tuning last avoids confounds.
+
+    Total ≈ 52 trials vs 108 in a flat search, with better coverage of
+    the interactions that actually matter.
+    """
+    pg_list_repr = repr(profit_goal_values)   # e.g. "[0.8, 1.2, 1.5, 2.0]"
+
+    return [
+
+        # ================================================================
+        # MD header
+        # ================================================================
+        md(f"## Hyperparameter Search — 3-Stage Staged Pipeline\n\n"
+           "Hyperparameters are tuned in three sequential stages, each building on "
+           "the previous, so that only the parameters relevant to each stage are "
+           "free while the others are held fixed. Results are written to disk after "
+           "every trial; re-running the cell resumes from where it left off.\n\n"
+           "| Stage | Free parameters | Fixed | Trials |\n"
+           "|-------|----------------|-------|--------|\n"
+           "| **1** | `lr_theta`, `lr_w` | moderate weights, default profit_goal | 12 |\n"
+           "| **2** | `profit_goal`, `alpha_weight`, `beta_weight` | lr* from S1 | 36 |\n"
+           "| **3** | `num_inner_steps` | all S1+S2 best values | 4 |\n\n"
+           "**Scoring** (all stages): `revenue − 10·max(0, IC−ε) − 10·max(0, IR−ε) "
+           "− 10·max(0, IR_viol−ε) − 10·max(0, BV−ε)`  \n"
+           "Revenue is the objective; IC, IR, and feasibility are explicit constraints."),
+
+        # ================================================================
+        # Configuration + shared helper functions
+        # ================================================================
         code([
             "import itertools, random, time, math\n",
             "\n",
-            "# ---- HP Search Configuration (edit these if needed) ----\n",
-            "HP_TIME_BUDGET_HOURS = 12        # max total wall-clock search time\n",
-            "HP_TRIAL_EPOCHS      = 500       # outer epochs per screening trial\n",
-            "HP_TRIAL_INNER       = 150       # inner gradient steps per trial\n",
-            "HP_TRIAL_SAMPLES     = 64        # MC samples per trial\n",
-            "HP_EVAL_KEYS         = 16        # number of eval keys per trial\n",
-            "HP_EVAL_SAMPLES      = 128       # MC samples per trial evaluation\n",
+            "# ---- Global time budget ----\n",
+            "HP_TIME_BUDGET_HOURS = 12\n",
+            "\n",
+            "# ---- Per-stage epoch budgets ----\n",
+            "HP_S1_EPOCHS = 300   # Stage 1: LR anchor  (fast, just need stability signal)\n",
+            "HP_S2_EPOCHS = 500   # Stage 2: weights + profit_goal\n",
+            "HP_S3_EPOCHS = 500   # Stage 3: inner steps\n",
+            "HP_SAMPLES   = 64    # MC samples during training (all stages)\n",
+            "HP_EVAL_KEYS = 16    # eval keys per trial\n",
+            "HP_EVAL_SAMPS = 128  # eval MC samples per trial\n",
             "\n",
             "# ---- Constraint tolerances ----\n",
-            "# IC and IR are *constraints*, not objective terms.  Revenue is the sole objective.\n",
-            "# A trial is penalized (score -= 10 * excess) for each unit above the tolerance.\n",
-            "HP_IC_LOSS_THRESH    = 0.05      # max acceptable IC regret loss (cumulative regret)\n",
-            "HP_IR_LOSS_THRESH    = 0.05      # max acceptable IR loss magnitude (sum |reward|)\n",
-            "HP_IR_VIOL_THRESH    = 0.05      # max acceptable IR violation rate (fraction)\n",
-            "HP_BV_THRESH         = 0.05      # max acceptable budget violation rate (fraction)\n",
-            "\n",
-            "# ---- Search space (grid, randomly ordered = random search) ----\n",
-            "hp_search_space = {\n",
-            "    'lr_theta':        [3e-5, 1e-4, 3e-4],\n",
-            "    'lr_w':            [1e-4, 3e-4, 1e-3],\n",
-            "    'num_inner_steps': [150, 300],\n",
-            "    'alpha_weight':    [1e4, 1e5, 1e6],\n",
-            "    'beta_weight':     [1e3, 1e4],\n",
-            "}\n",
-            "\n",
-            "_hp_keys   = list(hp_search_space.keys())\n",
-            "_hp_combos = list(itertools.product(*[hp_search_space[k] for k in _hp_keys]))\n",
-            "random.seed(SEED)\n",
-            "random.shuffle(_hp_combos)\n",
-            "print(f'Search space: {len(_hp_combos)} combinations | budget: {HP_TIME_BUDGET_HOURS}h')\n",
-            "print(f'Trial: {HP_TRIAL_EPOCHS} epochs x {HP_TRIAL_INNER} inner steps')\n",
-            "print(f'Tolerances: IC<={HP_IC_LOSS_THRESH}, IR<={HP_IR_LOSS_THRESH}, '\n",
-            "      f'IR-viol<={HP_IR_VIOL_THRESH}, BV<={HP_BV_THRESH}')\n",
+            "# IC and IR are *constraints*, not objective terms.\n",
+            "# Revenue is maximised freely; violations are penalised once they\n",
+            "# exceed tolerance (10 units penalty per unit of excess).\n",
+            "HP_IC_LOSS_THRESH = 0.05   # cumulative regret\n",
+            "HP_IR_LOSS_THRESH = 0.05   # sum |reward|\n",
+            "HP_IR_VIOL_THRESH = 0.05   # IR violation rate\n",
+            "HP_BV_THRESH      = 0.05   # budget violation rate\n",
             "\n",
             f"hp_save_dir = {hp_save_dir_expr}\n",
             "os.makedirs(hp_save_dir, exist_ok=True)\n",
             "\n",
+            "# ---- Scoring function ----\n",
             "def _hp_score(r):\n",
-            "    \"\"\"\n",
-            "    Score = revenue_mean  (objective)\n",
-            "          - 10 * max(0, IC_regret  - HP_IC_LOSS_THRESH)  (IC constraint)\n",
-            "          - 10 * max(0, IR_loss    - HP_IR_LOSS_THRESH)  (IR constraint)\n",
-            "          - 10 * max(0, IR_viol    - HP_IR_VIOL_THRESH)  (IR-rate constraint)\n",
-            "          - 10 * max(0, BV_rate    - HP_BV_THRESH)       (budget constraint)\n",
-            "\n",
-            "    IC and IR are constraints, not objective terms.  Revenue is maximised freely;\n",
-            "    constraint violations are penalised proportionally once they exceed tolerance.\n",
-            "    If regret_mean is NaN (policy eval unavailable), the IC term is skipped.\n",
-            "    \"\"\"\n",
             "    bv_pen = 10.0 * max(0.0, r['budget_viol_mean'] - HP_BV_THRESH)\n",
             "    iv_pen = 10.0 * max(0.0, r['ir_viol_mean']    - HP_IR_VIOL_THRESH)\n",
             "    ir_pen = 10.0 * max(0.0, r['ir_loss_mean']    - HP_IR_LOSS_THRESH)\n",
             "    _rg = r.get('regret_mean', float('nan'))\n",
-            "    ic_pen = 0.0 if (_rg != _rg) else 10.0 * max(0.0, _rg - HP_IC_LOSS_THRESH)  # nan-safe\n",
+            "    ic_pen = 0.0 if (_rg != _rg) else 10.0 * max(0.0, _rg - HP_IC_LOSS_THRESH)\n",
             "    return r['revenue_mean'] - bv_pen - iv_pen - ir_pen - ic_pen\n",
-        ]),
-
-        # ----------------------------------------------------------------
-        code([
-            "# ---- Load existing results if resuming an interrupted search ----\n",
-            "hp_results_path = os.path.join(hp_save_dir, 'trial_results.json')\n",
-            "if os.path.exists(hp_results_path):\n",
-            "    with open(hp_results_path) as _f:\n",
-            "        all_trial_results = json.load(_f)\n",
-            "    print(f'Resuming: {len(all_trial_results)} completed trials loaded')\n",
-            "    _done_keys = {str(r['config']) for r in all_trial_results}\n",
-            "else:\n",
-            "    all_trial_results = []\n",
-            "    _done_keys = set()\n",
             "\n",
+            "# ---- Single-trial runner ----\n",
+            "# trial_cfg must contain all keys needed by nested_GD_budget.\n",
+            "def _run_trial(trial_cfg, trial_seed, n_epochs, n_samples):\n",
+            "    _ni = trial_cfg['num_inner_steps']\n",
+            "    _pg = trial_cfg['profit_goal']\n",
+            "    _mnet = hk.without_apply_rng(hk.transform(VARIANT_NETWORK[VARIANT]))\n",
+            "    _pnet = build_bounded_policy_net(\n",
+            "        d_priv=auction.d_priv, d_pub=auction.d_pub,\n",
+            "        G=auction.num_goods, hidden=cfg['policy_hidden'],\n",
+            "        residual_init_std=cfg['residual_init_std'],\n",
+            "    )\n",
+            "    _tl = nested_GD_budget(\n",
+            "        auction=auction,\n",
+            "        mechanism_network=_mnet, policy_network=_pnet,\n",
+            "        profit_goal=_pg,\n",
+            "        num_outer_epochs=n_epochs,\n",
+            "        lr_theta=trial_cfg['lr_theta'],\n",
+            "        num_inner_steps=_ni,\n",
+            "        lr_w=trial_cfg['lr_w'],\n",
+            "        num_samples_train=n_samples,\n",
+            "        alpha_weight=trial_cfg['alpha_weight'],\n",
+            "        beta_weight=trial_cfg['beta_weight'],\n",
+            "        print_iter=10**7,\n",
+            "        seed=trial_seed,\n",
+            "    )\n",
+            "    _mp = _tl.pop('mechanism_params'); _pp = _tl.pop('policy_params')\n",
+            "    _ek = jax.random.split(jax.random.PRNGKey(trial_seed + 99999), HP_EVAL_KEYS)\n",
+            "    _ev = eval_budget_mechanism_multikey(\n",
+            "        auction=auction, mechanism_network=_mnet, mechanism_params=_mp,\n",
+            "        profit_goal=_pg, num_samples=HP_EVAL_SAMPS, keys=_ek,\n",
+            "        policy_network=_pnet, policy_params=_pp,\n",
+            "    )\n",
+            "    return {\n",
+            "        'config':           trial_cfg,\n",
+            "        'revenue_mean':     float(_ev['profit_stats']['mean']),\n",
+            "        'revenue_std':      float(_ev['profit_stats']['std']),\n",
+            "        'ir_loss_mean':     float(_ev['ir_loss_stats']['mean']),\n",
+            "        'budget_viol_mean': float(_ev['budget_viol_stats']['mean']),\n",
+            "        'ir_viol_mean':     float(_ev['ir_viol_stats']['mean']),\n",
+            "        'gap_plus_mean':    float(_ev['gap_plus_stats']['mean']),\n",
+            "        'regret_mean':      float(_ev.get('regret_stats', {}).get('mean', float('nan'))),\n",
+            "        'final_reg_train':  float(_tl['reg'][-1]) if _tl.get('reg') else float('nan'),\n",
+            "        'final_ir_train':   float(_tl['ir'][-1])  if _tl.get('ir')  else float('nan'),\n",
+            "        'seed':             trial_seed,\n",
+            "    }\n",
+            "\n",
+            "# ---- Stage runner (handles resumption, time budget, fault tolerance) ----\n",
+            "def _run_stage(stage_name, combos, fixed_cfg, n_epochs, n_samples,\n",
+            "               results_path, search_start, budget_s):\n",
+            "    if os.path.exists(results_path):\n",
+            "        with open(results_path) as _f:\n",
+            "            _results = json.load(_f)\n",
+            "        print(f'  [{stage_name}] loaded {len(_results)} prior results (resuming)')\n",
+            "        _done = {str(r['config']) for r in _results}\n",
+            "    else:\n",
+            "        _results = []; _done = set()\n",
+            "    for _i, _tcfg in enumerate(combos):\n",
+            "        _full = {**fixed_cfg, **_tcfg}   # search overrides fixed\n",
+            "        if str(_full) in _done:\n",
+            "            continue\n",
+            "        _el = time.time() - search_start\n",
+            "        if _el >= budget_s:\n",
+            "            print(f'  [{stage_name}] time budget reached at trial {_i}'); break\n",
+            "        _rem = (budget_s - _el) / 3600\n",
+            "        print(f'  [{stage_name}] {_i+1}/{len(combos)} rem={_rem:.2f}h | {_tcfg}')\n",
+            "        _tseed = SEED + abs(hash(stage_name)) % 9999 + _i\n",
+            "        try:\n",
+            "            _rec = _run_trial(_full, _tseed, n_epochs, n_samples)\n",
+            "            _rec['score'] = _hp_score(_rec)\n",
+            "            _results.append(_rec); _done.add(str(_full))\n",
+            "            with open(results_path, 'w') as _f:\n",
+            "                json.dump(_results, _f, indent=2)\n",
+            "            _rv = _rec['revenue_mean']; _sc = _rec['score']\n",
+            "            _rg = _rec.get('regret_mean', float('nan'))\n",
+            "            _ir = _rec['ir_loss_mean']\n",
+            "            print(f'    => rev={_rv:.4f} regret={_rg:.4f} ir={_ir:.4f} score={_sc:.4f}')\n",
+            "        except Exception as _exc:\n",
+            "            print(f'    [FAILED] {_exc}')\n",
+            "    return sorted(_results, key=lambda r: r['score'], reverse=True)\n",
+            "\n",
+            "# Shared timer (covers all three stages)\n",
             "_search_start = time.time()\n",
             "_budget_s     = HP_TIME_BUDGET_HOURS * 3600\n",
-            "\n",
-            "for _tidx, _combo in enumerate(_hp_combos):\n",
-            "    _elapsed = time.time() - _search_start\n",
-            "    if _elapsed >= _budget_s:\n",
-            "        print(f'Time budget ({HP_TIME_BUDGET_HOURS}h) reached after {_tidx} combos.')\n",
-            "        break\n",
-            "\n",
-            "    _tcfg = dict(zip(_hp_keys, _combo))\n",
-            "    if str(_tcfg) in _done_keys:\n",
-            "        continue  # skip already-completed (enables resumption)\n",
-            "\n",
-            "    _rem_h = (_budget_s - _elapsed) / 3600\n",
-            "    print(f'Trial {_tidx+1}/{len(_hp_combos)} | elapsed={_elapsed/3600:.2f}h rem={_rem_h:.2f}h')\n",
-            "    print(f'  cfg: {_tcfg}')\n",
-            "\n",
-            "    _trial_seed = SEED + 10000 + _tidx\n",
-            "    try:\n",
-            "        _mnet = hk.without_apply_rng(hk.transform(VARIANT_NETWORK[VARIANT]))\n",
-            "        _pnet = build_bounded_policy_net(\n",
-            "            d_priv=auction.d_priv, d_pub=auction.d_pub,\n",
-            "            G=auction.num_goods, hidden=cfg['policy_hidden'],\n",
-            "            residual_init_std=cfg['residual_init_std'],\n",
-            "        )\n",
-            "        _tlogs = nested_GD_budget(\n",
-            "            auction=auction,\n",
-            "            mechanism_network=_mnet, policy_network=_pnet,\n",
-            "            profit_goal=cfg['profit_goal'],\n",
-            "            num_outer_epochs=HP_TRIAL_EPOCHS,\n",
-            "            lr_theta=_tcfg['lr_theta'],\n",
-            "            num_inner_steps=_tcfg['num_inner_steps'],\n",
-            "            lr_w=_tcfg['lr_w'],\n",
-            "            num_samples_train=HP_TRIAL_SAMPLES,\n",
-            "            alpha_weight=_tcfg['alpha_weight'],\n",
-            "            beta_weight=_tcfg['beta_weight'],\n",
-            "            print_iter=10**7,  # suppress per-epoch output during search\n",
-            "            seed=_trial_seed,\n",
-            "        )\n",
-            "        _tmp = _tlogs.pop('mechanism_params')\n",
-            "        _tpp = _tlogs.pop('policy_params')\n",
-            "\n",
-            "        _ekeys = jax.random.split(jax.random.PRNGKey(_trial_seed + 99999), HP_EVAL_KEYS)\n",
-            "        _tres = eval_budget_mechanism_multikey(\n",
-            "            auction=auction, mechanism_network=_mnet, mechanism_params=_tmp,\n",
-            "            profit_goal=cfg['profit_goal'],\n",
-            "            num_samples=HP_EVAL_SAMPLES, keys=_ekeys,\n",
-            "            policy_network=_pnet, policy_params=_tpp,\n",
-            "        )\n",
-            "\n",
-            "        _rec = {\n",
-            "            'trial_idx':        _tidx,\n",
-            "            'config':           _tcfg,\n",
-            "            'revenue_mean':     float(_tres['profit_stats']['mean']),\n",
-            "            'revenue_std':      float(_tres['profit_stats']['std']),\n",
-            "            'ir_loss_mean':     float(_tres['ir_loss_stats']['mean']),\n",
-            "            'budget_viol_mean': float(_tres['budget_viol_stats']['mean']),\n",
-            "            'ir_viol_mean':     float(_tres['ir_viol_stats']['mean']),\n",
-            "            'gap_plus_mean':    float(_tres['gap_plus_stats']['mean']),\n",
-            "            'regret_mean':      float(_tres.get('regret_stats', {}).get('mean', float('nan'))),\n",
-            "            'final_reg_train':  float(_tlogs['reg'][-1]) if _tlogs.get('reg') else float('nan'),\n",
-            "            'final_ir_train':   float(_tlogs['ir'][-1])  if _tlogs.get('ir')  else float('nan'),\n",
-            "            'elapsed_h':        _elapsed / 3600,\n",
-            "            'trial_seed':       _trial_seed,\n",
-            "        }\n",
-            "        _rec['score'] = _hp_score(_rec)\n",
-            "        all_trial_results.append(_rec)\n",
-            "        _done_keys.add(str(_tcfg))\n",
-            "\n",
-            "        # Fault-tolerant: persist after every trial\n",
-            "        with open(hp_results_path, 'w') as _f:\n",
-            "            json.dump(all_trial_results, _f, indent=2)\n",
-            "\n",
-            "        _rev = _rec['revenue_mean']; _ir = _rec['ir_loss_mean']\n",
-            "        _bv  = _rec['budget_viol_mean']; _sc = _rec['score']\n",
-            "        print(f'  => revenue={_rev:.4f}  ir_loss={_ir:.4f}  bv={_bv:.4f}  score={_sc:.4f}')\n",
-            "\n",
-            "    except Exception as _exc:\n",
-            "        print(f'  [TRIAL FAILED] {_exc}')\n",
-            "\n",
-            "_total_time_h = (time.time() - _search_start) / 3600\n",
-            "print(f'Search complete: {len(all_trial_results)} successful trials ({_total_time_h:.2f}h)')\n",
+            "print(f'Search started. Budget: {HP_TIME_BUDGET_HOURS}h')\n",
+            "print(f'Thresholds — IC<={HP_IC_LOSS_THRESH} IR<={HP_IR_LOSS_THRESH} '\n",
+            "      f'IV<={HP_IR_VIOL_THRESH} BV<={HP_BV_THRESH}')\n",
         ]),
 
-        # ----------------------------------------------------------------
+        # ================================================================
+        # Stage 1
+        # ================================================================
+        md("### Stage 1 — Anchor Learning Rates\n\n"
+           "Adam's adaptive gradient scaling makes `lr_theta` and `lr_w` partially "
+           "independent of loss weight magnitudes, so they can be anchored before the "
+           "weights are tuned. We hold `alpha_weight`, `beta_weight`, and `profit_goal` "
+           "at moderate defaults and search a 4×3 = 12-trial grid.\n\n"
+           "Criterion: score (revenue subject to IC/IR constraints). "
+           "A large spread in scores here indicates strong LR sensitivity; "
+           "a flat landscape means any LR in the range is acceptable."),
+
         code([
-            "# ---- Summarise search results ----\n",
-            "_sorted_trials = sorted(all_trial_results, key=lambda r: r['score'], reverse=True)\n",
+            "_s1_search = {\n",
+            "    'lr_theta': [3e-5, 1e-4, 3e-4, 1e-3],\n",
+            "    'lr_w':     [1e-4, 3e-4, 1e-3],\n",
+            "}\n",
+            "_s1_fixed = {\n",
+            "    'alpha_weight':    1e5,\n",
+            "    'beta_weight':     1e3,\n",
+            "    'profit_goal':     cfg['profit_goal'],\n",
+            "    'num_inner_steps': 150,\n",
+            "}\n",
+            "_s1_combos = [dict(zip(_s1_search, c))\n",
+            "              for c in itertools.product(*_s1_search.values())]\n",
+            "random.seed(SEED); random.shuffle(_s1_combos)\n",
+            "print(f'Stage 1: {len(_s1_combos)} combos x {HP_S1_EPOCHS} epochs')\n",
             "\n",
-            "print(f'Top 10 / {len(all_trial_results)} trials by score:')\n",
-            "print(f'  Thresholds: IC<={HP_IC_LOSS_THRESH}, IR<={HP_IR_LOSS_THRESH}, '\n",
-            "      f'IV<={HP_IR_VIOL_THRESH}, BV<={HP_BV_THRESH}')\n",
-            "print(f'  {\"score\":>7}  {\"revenue\":>8}  {\"ic_loss\":>8}  {\"ir_loss\":>8}  {\"bv_rate\":>7}  {\"iv_rate\":>7}  config')\n",
-            "print('  ' + '-'*108)\n",
-            "for _r in _sorted_trials[:10]:\n",
-            "    _sc  = _r['score'];             _rev = _r['revenue_mean']\n",
-            "    _ic  = _r.get('regret_mean', float('nan'))\n",
-            "    _ir  = _r['ir_loss_mean'];      _bv  = _r['budget_viol_mean']\n",
-            "    _iv  = _r['ir_viol_mean'];      _cfg = _r['config']\n",
-            "    _ic_s = f'{_ic:>8.4f}' if _ic == _ic else '     nan'\n",
-            "    print(f'  {_sc:>7.4f}  {_rev:>8.4f}  {_ic_s}  {_ir:>8.4f}  {_bv:>7.4f}  {_iv:>7.4f}  {_cfg}')\n",
+            "_s1_results = _run_stage(\n",
+            "    'S1-LR', _s1_combos, _s1_fixed, HP_S1_EPOCHS, HP_SAMPLES,\n",
+            "    os.path.join(hp_save_dir, 's1_lr.json'), _search_start, _budget_s,\n",
+            ")\n",
             "\n",
-            "# ---- Visualise ----\n",
-            "_revenues  = [r['revenue_mean']           for r in all_trial_results]\n",
-            "_ir_losses = [r['ir_loss_mean']            for r in all_trial_results]\n",
-            "_scores    = [r['score']                   for r in all_trial_results]\n",
-            "_lr_thetas = [r['config']['lr_theta']       for r in all_trial_results]\n",
-            "_alpha_ws  = [r['config']['alpha_weight']   for r in all_trial_results]\n",
-            "_beta_ws   = [r['config']['beta_weight']    for r in all_trial_results]\n",
+            "lr_theta_star = _s1_results[0]['config']['lr_theta']\n",
+            "lr_w_star     = _s1_results[0]['config']['lr_w']\n",
+            "print(f'\\nStage 1 best: lr_theta={lr_theta_star:.1e}  lr_w={lr_w_star:.1e}')\n",
+            "print(f'  score={_s1_results[0][\"score\"]:.4f}  revenue={_s1_results[0][\"revenue_mean\"]:.4f}')\n",
             "\n",
-            "fig, axes = plt.subplots(1, 3, figsize=(16, 4))\n",
-            "\n",
-            "_sc_plot = axes[0].scatter(_revenues, _ir_losses, c=_scores,\n",
-            "                           cmap='viridis', alpha=0.75, s=40)\n",
-            "axes[0].set_xlabel('Revenue'); axes[0].set_ylabel('IR Loss')\n",
-            f"axes[0].set_title('{exp_label} — Revenue vs IR Loss (color=score)')\n",
-            "plt.colorbar(_sc_plot, ax=axes[0])\n",
-            "\n",
-            "axes[1].hist(_scores, bins=20, edgecolor='black', alpha=0.75, color='steelblue')\n",
-            "_best_sc = _sorted_trials[0]['score']\n",
-            "axes[1].axvline(_best_sc, color='red', linestyle='--', label=f'Best={_best_sc:.3f}')\n",
-            "axes[1].set_xlabel('Score'); axes[1].set_ylabel('Count')\n",
-            "axes[1].set_title('Score Distribution'); axes[1].legend()\n",
-            "\n",
-            "for _lr in sorted(set(_lr_thetas)):\n",
-            "    _mask = [r for r in all_trial_results if r['config']['lr_theta'] == _lr]\n",
-            "    axes[2].scatter([_lr]*len(_mask), [r['score'] for r in _mask],\n",
-            "                    alpha=0.6, s=30, label=f'{_lr:.0e}')\n",
-            "axes[2].set_xscale('log'); axes[2].set_xlabel('lr_theta')\n",
-            "axes[2].set_ylabel('Score')\n",
-            f"axes[2].set_title('{exp_label} — Score vs lr_theta')\n",
-            "axes[2].legend(title='lr_theta', fontsize=8)\n",
-            "\n",
+            "# Sensitivity plots\n",
+            "fig, axes = plt.subplots(1, 2, figsize=(11, 4))\n",
+            "for _ax, _key, _star in zip(axes, ['lr_theta', 'lr_w'], [lr_theta_star, lr_w_star]):\n",
+            "    _vals = sorted(set(r['config'][_key] for r in _s1_results))\n",
+            "    _means = []\n",
+            "    for _v in _vals:\n",
+            "        _sub = [r['score'] for r in _s1_results if r['config'][_key] == _v]\n",
+            "        _ax.scatter([_v]*len(_sub), _sub, alpha=0.6, s=40)\n",
+            "        _means.append(sum(_sub)/len(_sub))\n",
+            "    _ax.plot(_vals, _means, 'k--', alpha=0.4, label='mean')\n",
+            "    _ax.axvline(_star, color='red', linestyle='--', label=f'best={_star:.0e}')\n",
+            "    _ax.set_xscale('log'); _ax.set_xlabel(_key)\n",
+            "    _ax.set_ylabel('Score'); _ax.legend(); _ax.set_title(f'Stage 1 — {_key}')\n",
             "plt.tight_layout(); plt.show()\n",
         ]),
 
-        # ----------------------------------------------------------------
+        # ================================================================
+        # Stage 2
+        # ================================================================
+        md("### Stage 2 — Joint Search: Profit Goal × Loss Weights\n\n"
+           "`profit_goal`, `alpha_weight`, and `beta_weight` are tightly coupled: "
+           "raising `profit_goal` increases the gap-term magnitude, making the IC penalty "
+           "relatively weaker unless `alpha_weight` is raised proportionally. "
+           "Searching them jointly (with LRs anchored) reveals the correct trade-off surface "
+           "and identifies the highest revenue target that still converges to a feasible mechanism.\n\n"
+           "**Fixed:** `lr_theta*`, `lr_w*` from Stage 1, `num_inner_steps=200`  \n"
+           "**Search:** `profit_goal` × `alpha_weight` × `beta_weight` (3×3×3 = **27 trials**)"),
+
         code([
-            "# ---- Select best configuration ----\n",
-            "best_trial  = max(all_trial_results, key=lambda r: r['score'])\n",
-            "best_cfg_hp = best_trial['config']\n",
+            f"_s2_pg = {pg_list_repr}   # candidate revenue targets\n",
+            "_s2_search = {\n",
+            "    'profit_goal':  _s2_pg,\n",
+            "    'alpha_weight': [1e4, 1e5, 1e6],\n",
+            "    'beta_weight':  [5e2, 1e3, 5e3],\n",
+            "}\n",
+            "_s2_fixed = {\n",
+            "    'lr_theta':        lr_theta_star,\n",
+            "    'lr_w':            lr_w_star,\n",
+            "    'num_inner_steps': 200,\n",
+            "}\n",
+            "_s2_combos = [dict(zip(_s2_search, c))\n",
+            "              for c in itertools.product(*_s2_search.values())]\n",
+            "random.seed(SEED + 1); random.shuffle(_s2_combos)\n",
+            "print(f'Stage 2: {len(_s2_combos)} combos x {HP_S2_EPOCHS} epochs')\n",
+            "\n",
+            "_s2_results = _run_stage(\n",
+            "    'S2-Weights', _s2_combos, _s2_fixed, HP_S2_EPOCHS, HP_SAMPLES,\n",
+            "    os.path.join(hp_save_dir, 's2_weights.json'), _search_start, _budget_s,\n",
+            ")\n",
+            "\n",
+            "profit_goal_star  = _s2_results[0]['config']['profit_goal']\n",
+            "alpha_weight_star = _s2_results[0]['config']['alpha_weight']\n",
+            "beta_weight_star  = _s2_results[0]['config']['beta_weight']\n",
+            "print(f'\\nStage 2 best:')\n",
+            "print(f'  profit_goal={profit_goal_star}  '\n",
+            "      f'alpha_weight={alpha_weight_star:.0e}  beta_weight={beta_weight_star:.0e}')\n",
+            "print(f'  score={_s2_results[0][\"score\"]:.4f}  revenue={_s2_results[0][\"revenue_mean\"]:.4f}')\n",
+            "\n",
+            "# Sensitivity plots\n",
+            "fig, axes = plt.subplots(1, 3, figsize=(15, 4))\n",
+            "for _ax, _key, _star, _log in zip(\n",
+            "    axes,\n",
+            "    ['profit_goal', 'alpha_weight', 'beta_weight'],\n",
+            "    [profit_goal_star, alpha_weight_star, beta_weight_star],\n",
+            "    [False, True, True],\n",
+            "):\n",
+            "    _vals  = sorted(set(r['config'][_key] for r in _s2_results))\n",
+            "    _means = []\n",
+            "    for _v in _vals:\n",
+            "        _sub = [r['score'] for r in _s2_results if r['config'][_key] == _v]\n",
+            "        _ax.scatter([_v]*len(_sub), _sub, alpha=0.6, s=40)\n",
+            "        _means.append(sum(_sub)/len(_sub))\n",
+            "    _ax.plot(_vals, _means, 'k--', alpha=0.4, label='mean')\n",
+            "    _ax.axvline(_star, color='red', linestyle='--', label=f'best={_star}')\n",
+            "    if _log: _ax.set_xscale('log')\n",
+            "    _ax.set_xlabel(_key); _ax.set_ylabel('Score')\n",
+            "    _ax.legend(); _ax.set_title(f'Stage 2 — {_key}')\n",
+            "plt.tight_layout(); plt.show()\n",
+        ]),
+
+        # ================================================================
+        # Stage 3
+        # ================================================================
+        md("### Stage 3 — Fine-Tune Inner Oracle Steps\n\n"
+           "With the mechanism target locked in (from Stage 2), the difficulty of the IC "
+           "problem is fixed. Too few inner steps and the oracle underestimates regret, "
+           "producing a falsely optimistic IC loss; too many wastes compute with diminishing "
+           "returns. We identify the knee of the IC-quality vs compute curve.\n\n"
+           "**Fixed:** all Stage 1 + 2 best values  \n"
+           "**Search:** `num_inner_steps` ∈ {100, 200, 300, 500} (**4 trials**)"),
+
+        code([
+            "_s3_search = {'num_inner_steps': [100, 200, 300, 500]}\n",
+            "_s3_fixed = {\n",
+            "    'lr_theta':     lr_theta_star,\n",
+            "    'lr_w':         lr_w_star,\n",
+            "    'profit_goal':  profit_goal_star,\n",
+            "    'alpha_weight': alpha_weight_star,\n",
+            "    'beta_weight':  beta_weight_star,\n",
+            "}\n",
+            "_s3_combos = [{'num_inner_steps': n} for n in _s3_search['num_inner_steps']]\n",
+            "print(f'Stage 3: {len(_s3_combos)} combos x {HP_S3_EPOCHS} epochs')\n",
+            "\n",
+            "_s3_results = _run_stage(\n",
+            "    'S3-InnerSteps', _s3_combos, _s3_fixed, HP_S3_EPOCHS, HP_SAMPLES,\n",
+            "    os.path.join(hp_save_dir, 's3_inner.json'), _search_start, _budget_s,\n",
+            ")\n",
+            "\n",
+            "inner_steps_star = _s3_results[0]['config']['num_inner_steps']\n",
+            "print(f'\\nStage 3 best: num_inner_steps={inner_steps_star}')\n",
+            "print(f'  score={_s3_results[0][\"score\"]:.4f}  revenue={_s3_results[0][\"revenue_mean\"]:.4f}')\n",
+            "\n",
+            "# IC regret vs inner steps (the key diagnostic)\n",
+            "fig, axes = plt.subplots(1, 2, figsize=(10, 4))\n",
+            "_ns = [r['config']['num_inner_steps']      for r in _s3_results]\n",
+            "_sc = [r['score']                           for r in _s3_results]\n",
+            "_rg = [r.get('regret_mean', float('nan'))  for r in _s3_results]\n",
+            "axes[0].plot(_ns, _sc, 'o-b'); axes[0].set_xlabel('num_inner_steps')\n",
+            "axes[0].set_ylabel('Score');   axes[0].set_title('Stage 3 — Score')\n",
+            "axes[0].axvline(inner_steps_star, color='red', linestyle='--')\n",
+            "axes[1].plot(_ns, _rg, 's-', color='darkorange')\n",
+            "axes[1].set_xlabel('num_inner_steps')\n",
+            "axes[1].set_ylabel('IC Regret (eval)'); axes[1].set_title('IC Regret vs inner steps')\n",
+            "axes[1].axhline(HP_IC_LOSS_THRESH, color='red', linestyle=':', label=f'thresh={HP_IC_LOSS_THRESH}')\n",
+            "axes[1].legend()\n",
+            "plt.tight_layout(); plt.show()\n",
+        ]),
+
+        # ================================================================
+        # Consolidate
+        # ================================================================
+        code([
+            "# ---- Consolidate optimal configuration from all 3 stages ----\n",
+            "best_cfg_hp = {\n",
+            "    'lr_theta':        lr_theta_star,\n",
+            "    'lr_w':            lr_w_star,\n",
+            "    'profit_goal':     profit_goal_star,\n",
+            "    'alpha_weight':    alpha_weight_star,\n",
+            "    'beta_weight':     beta_weight_star,\n",
+            "    'num_inner_steps': inner_steps_star,\n",
+            "}\n",
             "\n",
             "print('=' * 62)\n",
             f"print('OPTIMAL HYPERPARAMETERS — {exp_label}')\n",
             "print('=' * 62)\n",
             "for _k, _v in best_cfg_hp.items():\n",
             "    print(f'  {_k:20s}: {_v}')\n",
-            "print()\n",
-            "print(f'  Screening revenue : {best_trial[\"revenue_mean\"]:.4f} +/- {best_trial[\"revenue_std\"]:.4f}')\n",
-            "print(f'  Screening IR loss : {best_trial[\"ir_loss_mean\"]:.4f}')\n",
-            "print(f'  Budget viol rate  : {best_trial[\"budget_viol_mean\"]:.4f}')\n",
-            "print(f'  IR viol rate      : {best_trial[\"ir_viol_mean\"]:.4f}')\n",
-            "print(f'  Score             : {best_trial[\"score\"]:.4f}')\n",
+            "_tot = len(_s1_results) + len(_s2_results) + len(_s3_results)\n",
+            "_th  = (time.time() - _search_start) / 3600\n",
+            "print(f'\\nTotal: {_tot} trials in {_th:.2f}h')\n",
             "\n",
-            "_best_save = {\n",
+            "_search_summary = {\n",
             "    'optimal_config':  best_cfg_hp,\n",
-            "    'screening_stats': {k: v for k, v in best_trial.items() if k != 'config'},\n",
-            "    'variant':         VARIANT,\n",
-            "    'search_space':    hp_search_space,\n",
-            "    'num_trials':      len(all_trial_results),\n",
-            "    'ranked_configs':  [\n",
-            "        {'config': r['config'], 'score': r['score'],\n",
-            "         'revenue': r['revenue_mean'], 'ir_loss': r['ir_loss_mean']}\n",
-            "        for r in _sorted_trials\n",
-            "    ],\n",
+            "    'stage1_best':     _s1_results[0] if _s1_results else None,\n",
+            "    'stage2_best':     _s2_results[0] if _s2_results else None,\n",
+            "    'stage3_best':     _s3_results[0] if _s3_results else None,\n",
+            "    'total_trials':    _tot,\n",
+            "    'total_time_h':    _th,\n",
+            "    'thresholds':      {'IC': HP_IC_LOSS_THRESH, 'IR': HP_IR_LOSS_THRESH,\n",
+            "                        'IR_viol': HP_IR_VIOL_THRESH, 'BV': HP_BV_THRESH},\n",
             "}\n",
             "with open(os.path.join(hp_save_dir, 'best_hparams.json'), 'w') as _f:\n",
-            "    json.dump(_best_save, _f, indent=2)\n",
-            "print(f'\\nSaved: {hp_save_dir}/best_hparams.json')\n",
+            "    json.dump(_search_summary, _f, indent=2)\n",
+            "print(f'Saved: {hp_save_dir}/best_hparams.json')\n",
         ]),
 
-        # ----------------------------------------------------------------
+        # ================================================================
+        # Final training
+        # ================================================================
         md("## Final Training with Optimal Hyperparameters\n\n"
-           "Retrain for the full epoch budget using the best configuration found above."),
+           "Retrain for the full epoch budget using the staged-search optimum. "
+           "Note that `profit_goal` is now set to the value found in Stage 2, "
+           "not the configuration default."),
 
         code([
-            "print(f'Retraining with optimal config for {cfg[\"num_outer_epochs\"]} epochs ...')\n",
-            "print(f'  {best_cfg_hp}')\n",
+            "print(f'Retraining — {cfg[\"num_outer_epochs\"]} epochs with optimal config:')\n",
+            "for _k, _v in best_cfg_hp.items():\n",
+            "    print(f'  {_k:20s}: {_v}')\n",
             "\n",
             "final_mnet = hk.without_apply_rng(hk.transform(VARIANT_NETWORK[VARIANT]))\n",
             "final_pnet = build_bounded_policy_net(\n",
@@ -317,11 +433,10 @@ def hp_search_cells(exp_label, hp_save_dir_expr, final_save_dir_expr):
             "    G=auction.num_goods, hidden=cfg['policy_hidden'],\n",
             "    residual_init_std=cfg['residual_init_std'],\n",
             ")\n",
-            "\n",
             "final_logs = nested_GD_budget(\n",
             "    auction=auction,\n",
             "    mechanism_network=final_mnet, policy_network=final_pnet,\n",
-            "    profit_goal=cfg['profit_goal'],\n",
+            "    profit_goal=best_cfg_hp['profit_goal'],\n",
             "    num_outer_epochs=cfg['num_outer_epochs'],\n",
             "    lr_theta=best_cfg_hp['lr_theta'],\n",
             "    num_inner_steps=best_cfg_hp['num_inner_steps'],\n",
@@ -352,38 +467,41 @@ def hp_search_cells(exp_label, hp_save_dir_expr, final_save_dir_expr):
             "final_results = eval_budget_mechanism_multikey(\n",
             "    auction=auction, mechanism_network=final_mnet,\n",
             "    mechanism_params=final_mechanism_params,\n",
-            "    profit_goal=cfg['profit_goal'],\n",
+            "    profit_goal=best_cfg_hp['profit_goal'],\n",
             "    num_samples=256, keys=final_eval_keys,\n",
             "    policy_network=final_pnet, policy_params=final_policy_params,\n",
             ")\n",
-            f"print_eval_report(final_results, prefix=f'{exp_label} Variant {{VARIANT}} (optimal hparams): ')\n",
+            f"print_eval_report(final_results, prefix=f'{exp_label} Variant {{VARIANT}} (optimal): ')\n",
         ]),
 
-        # ----------------------------------------------------------------
+        # ================================================================
+        # Cross-variant comparison
+        # ================================================================
         md("## Cross-Variant Comparison\n\n"
-           "Train variants A, B, C under the same optimal hyperparameters and compare all metrics. "
-           "This is the core experimental comparison: does richer history compression help?"),
+           "Train A, B, C under identical optimal hyperparameters "
+           "(including the `profit_goal` found in Stage 2). "
+           "This is the core experimental comparison."),
 
         code([
             "variant_results = {\n",
             "    VARIANT: {'logs': final_logs, 'eval': final_results,\n",
-            "              'mech_params': final_mechanism_params, 'pol_params': final_policy_params}\n",
+            "              'mech_params': final_mechanism_params,\n",
+            "              'pol_params':  final_policy_params}\n",
             "}\n",
-            "\n",
             "for _v in ['A', 'B', 'C']:\n",
             "    if _v == VARIANT:\n",
             "        continue\n",
-            "    print(f'\\n--- Training Variant {_v} with optimal hparams ---')\n",
+            "    print(f'\\n--- Variant {_v} ---')\n",
             "    _vnet  = hk.without_apply_rng(hk.transform(VARIANT_NETWORK[_v]))\n",
             "    _vpnet = build_bounded_policy_net(\n",
             "        d_priv=auction.d_priv, d_pub=auction.d_pub,\n",
             "        G=auction.num_goods, hidden=cfg['policy_hidden'],\n",
             "        residual_init_std=cfg['residual_init_std'],\n",
             "    )\n",
-            "    _vlogs = nested_GD_budget(\n",
+            "    _vl = nested_GD_budget(\n",
             "        auction=auction,\n",
             "        mechanism_network=_vnet, policy_network=_vpnet,\n",
-            "        profit_goal=cfg['profit_goal'],\n",
+            "        profit_goal=best_cfg_hp['profit_goal'],\n",
             "        num_outer_epochs=cfg['num_outer_epochs'],\n",
             "        lr_theta=best_cfg_hp['lr_theta'],\n",
             "        num_inner_steps=best_cfg_hp['num_inner_steps'],\n",
@@ -394,58 +512,58 @@ def hp_search_cells(exp_label, hp_save_dir_expr, final_save_dir_expr):
             "        print_iter=cfg['print_iter'],\n",
             "        seed=SEED,\n",
             "    )\n",
-            "    _vmp = _vlogs.pop('mechanism_params'); _vpp = _vlogs.pop('policy_params')\n",
+            "    _vmp = _vl.pop('mechanism_params'); _vpp = _vl.pop('policy_params')\n",
             "    _vek = jax.random.split(jax.random.PRNGKey(88888), 32)\n",
             "    _vev = eval_budget_mechanism_multikey(\n",
             "        auction=auction, mechanism_network=_vnet, mechanism_params=_vmp,\n",
-            "        profit_goal=cfg['profit_goal'],\n",
+            "        profit_goal=best_cfg_hp['profit_goal'],\n",
             "        num_samples=256, keys=_vek,\n",
             "        policy_network=_vpnet, policy_params=_vpp,\n",
             "    )\n",
             "    print_eval_report(_vev, prefix=f'Variant {_v}: ')\n",
-            "    variant_results[_v] = {'logs': _vlogs, 'eval': _vev,\n",
+            "    variant_results[_v] = {'logs': _vl, 'eval': _vev,\n",
             "                            'mech_params': _vmp, 'pol_params': _vpp}\n",
             "\n",
             "# Summary table\n",
             "print('\\n' + '='*72)\n",
-            f"print(f'{exp_label} — Cross-Variant Comparison (optimal hparams)')\n",
+            f"print(f'{exp_label} — A vs B vs C  (profit_goal={{profit_goal_star}}, optimal hparams)')\n",
             "print('='*72)\n",
-            "print(f'  {\"Variant\":>7} | {\"Revenue\":>9} | {\"Gap+\":>7} | {\"IR Loss\":>9} | {\"BV Rate\":>8} | {\"IV Rate\":>8}')\n",
-            "print('  ' + '-'*65)\n",
+            "print(f'  {\"Var\":>4} | {\"Revenue\":>9} | {\"Gap+\":>7} | {\"IC Reg\":>8} | {\"IR Loss\":>8} | {\"BV\":>6} | {\"IV\":>6}')\n",
+            "print('  ' + '-'*68)\n",
             "for _v in ['A', 'B', 'C']:\n",
-            "    if _v not in variant_results:\n",
-            "        continue\n",
-            "    _ev  = variant_results[_v]['eval']\n",
-            "    _rev = _ev['profit_stats']['mean']\n",
-            "    _gp  = _ev['gap_plus_stats']['mean']\n",
-            "    _ir  = _ev['ir_loss_stats']['mean']\n",
-            "    _bv  = _ev['budget_viol_stats']['mean']\n",
-            "    _iv  = _ev['ir_viol_stats']['mean']\n",
-            "    print(f'  {_v:>7} | {_rev:>9.4f} | {_gp:>7.4f} | {_ir:>9.4f} | {_bv:>8.4f} | {_iv:>8.4f}')\n",
+            "    if _v not in variant_results: continue\n",
+            "    _ev = variant_results[_v]['eval']\n",
+            "    _rg = _ev.get('regret_stats', {}).get('mean', float('nan'))\n",
+            "    print(f'  {_v:>4} | {_ev[\"profit_stats\"][\"mean\"]:>9.4f} | '\n",
+            "          f'{_ev[\"gap_plus_stats\"][\"mean\"]:>7.4f} | '\n",
+            "          f'{_rg:>8.4f} | '\n",
+            "          f'{_ev[\"ir_loss_stats\"][\"mean\"]:>8.4f} | '\n",
+            "          f'{_ev[\"budget_viol_stats\"][\"mean\"]:>6.4f} | '\n",
+            "          f'{_ev[\"ir_viol_stats\"][\"mean\"]:>6.4f}')\n",
             "\n",
-            "# Learning-curve comparison plot\n",
+            "# Learning-curve comparison\n",
             "fig, axes = plt.subplots(1, 3, figsize=(15, 4))\n",
-            "for _v, _col in zip(['A', 'B', 'C'], ['tab:blue', 'tab:orange', 'tab:green']):\n",
-            "    if _v not in variant_results:\n",
-            "        continue\n",
+            "for _v, _col in zip(['A','B','C'], ['tab:blue','tab:orange','tab:green']):\n",
+            "    if _v not in variant_results: continue\n",
             "    _l = variant_results[_v]['logs']\n",
             "    axes[0].plot(_l['reg_plus'], color=_col, label=_v, alpha=0.85)\n",
             "    axes[1].plot(_l['gap_plus'], color=_col, label=_v, alpha=0.85)\n",
             "    axes[2].plot(_l['ir'],       color=_col, label=_v, alpha=0.85)\n",
-            "for _ax, _ttl in zip(axes, ['Regret+', 'Profit Gap+', 'IR Loss']):\n",
-            "    _ax.set_title(_ttl); _ax.set_xlabel('Epoch'); _ax.legend()\n",
+            "for _ax, _t in zip(axes, ['Regret+','Profit Gap+','IR Loss']):\n",
+            "    _ax.set_title(_t); _ax.set_xlabel('Epoch'); _ax.legend()\n",
             f"plt.suptitle(f'{exp_label} — A vs B vs C (optimal hparams)', y=1.02)\n",
             "plt.tight_layout(); plt.show()\n",
         ]),
 
-        # ----------------------------------------------------------------
+        # ================================================================
+        # Save
+        # ================================================================
         md("## Save All Outputs"),
 
         code([
             f"final_save_dir = {final_save_dir_expr}\n",
             "os.makedirs(final_save_dir, exist_ok=True)\n",
             "\n",
-            "# Save model params, logs, and eval for each variant\n",
             "variant_summary = {}\n",
             "for _v, _vr in variant_results.items():\n",
             "    with open(f'{final_save_dir}/mech_params_{_v}.pkl', 'wb') as _f:\n",
@@ -464,57 +582,51 @@ def hp_search_cells(exp_label, hp_save_dir_expr, final_save_dir_expr):
             "        'regret':         _ev.get('regret_stats', {}),\n",
             "        'optimal_config': best_cfg_hp,\n",
             "    }\n",
-            "\n",
             "with open(f'{final_save_dir}/variant_comparison.json', 'w') as _f:\n",
             "    json.dump(variant_summary, _f, indent=2)\n",
-            "\n",
-            "# Standalone optimal-hparams file for easy reference\n",
             "with open(f'{final_save_dir}/optimal_hparams.json', 'w') as _f:\n",
-            "    json.dump({\n",
-            f"        'exp':            '{exp_label}',\n",
-            "        'variant':        VARIANT,\n",
-            "        'optimal_config': best_cfg_hp,\n",
-            "        'search_stats': {\n",
-            "            'num_trials':  len(all_trial_results),\n",
-            "            'best_score':  best_trial['score'],\n",
-            "            'best_revenue': best_trial['revenue_mean'],\n",
-            "        },\n",
-            "    }, _f, indent=2)\n",
+            "    json.dump({'optimal_config': best_cfg_hp,\n",
+            f"               'exp': '{exp_label}', 'variant': VARIANT}}, _f, indent=2)\n",
             "\n",
-            "print(f'All outputs saved to: {final_save_dir}/')\n",
-            "print(f'  mech_params_{{A,B,C}}.pkl  — mechanism parameters per variant')\n",
-            "print(f'  pol_params_{{A,B,C}}.pkl   — policy parameters per variant')\n",
-            "print(f'  logs_{{A,B,C}}.pkl          — training loss history per variant')\n",
-            "print(f'  variant_comparison.json   — cross-variant evaluation summary')\n",
-            "print(f'  optimal_hparams.json      — best hyperparameter configuration')\n",
-            "print(f'HP search artefacts: {hp_save_dir}/')\n",
-            "print(f'  trial_results.json        — all trial records')\n",
-            "print(f'  best_hparams.json         — ranked configs + best config')\n",
+            "print(f'Saved to: {final_save_dir}/')\n",
+            "print(f'  mech/pol/logs_{{A,B,C}}.pkl — model artefacts per variant')\n",
+            "print(f'  variant_comparison.json   — cross-variant eval summary')\n",
+            "print(f'  optimal_hparams.json      — best hyperparameter config')\n",
+            "print(f'HP search logs: {hp_save_dir}/')\n",
+            "print(f'  s1_lr.json / s2_weights.json / s3_inner.json — per-stage results')\n",
+            "print(f'  best_hparams.json — consolidated search summary')\n",
         ]),
     ]
 
 
-# ==========================================================================
-# Experiment 1: Public-state budget auction notebook
-# ==========================================================================
+# ===========================================================================
+# Experiment 1: Public-state budget auction
+# ===========================================================================
 
-EXP1_CELLS = [
+_EXP1_SETUP = [
     md("# Budget Auction — Experiment 1: Public-State Budget Auction\n\n"
        "Compares mechanism input variants **A** (GBAM/public-balance), **B** (richer history), "
        "**C** (full history) in a Deng-2021-style setting where the GBAM state should be "
        "theoretically sufficient.\n\n"
        "Run in Google Colab with GPU runtime for best performance."),
 
-    code(["%pip install -q git+https://github.com/deepmind/dm-haiku\n",
-          "%pip install -q jaxopt optax flax pyyaml\n"]),
+    code(["import os\n",
+          "# 1. Force remove existing JAX/PJRT installations to ensure a clean state\n",
+          "!pip uninstall -y jax jaxlib jax-cuda12-plugin jax-cuda12-pjrt\n",
+          "\n",
+          "# 2. Install the latest JAX with full CUDA 12 support and updated libraries\n",
+          "!pip install -U \"jax[cuda12]\" dm-haiku optax flax\n",
+          "\n",
+          "print('\\n--- UPGRADE FINISHED ---')\n",
+          "print('IMPORTANT: Please go to Runtime -> Restart session now to activate the GPU drivers.')\n"]),
 
-    code(["# Mount Google Drive (Colab only)\n",
+    code(["# Mount Google Drive after restarting the session\n",
           "try:\n",
           "    from google.colab import drive\n",
           "    drive.mount('/content/drive')\n",
           "    %cd /content/drive/MyDrive/My\\ Research/Dynamic\\ Mechanism\\ Design/Budget\\ Auction\n",
           "except ImportError:\n",
-          "    pass  # Running locally\n"]),
+          "    pass  # running locally\n"]),
 
     code(["from typing import Dict\n",
           "import jax\n",
@@ -540,14 +652,13 @@ EXP1_CELLS = [
 
     md("## Configuration"),
 
-    code(["# ---- Select variant and global seed ----\n",
-          "VARIANT = 'A'   # 'A' | 'B' | 'C'\n",
+    code(["VARIANT = 'A'   # 'A' | 'B' | 'C'\n",
           "SEED    = 42\n",
           "\n",
           "cfg = dict(\n",
           "    n_buyers=2, n_goods=1, horizon=5, discount=0.9,\n",
           "    initial_budget=3.0,\n",
-          "    profit_goal=1.5,\n",
+          "    profit_goal=1.5,      # default; Stage 2 search may revise this\n",
           "    num_outer_epochs=2000,\n",
           "    num_inner_steps=300,\n",
           "    lr_theta=1e-4, lr_w=3e-4,\n",
@@ -562,109 +673,90 @@ EXP1_CELLS = [
 
     code(["auction = create_public_budget_auction(\n",
           "    n_buyers=cfg['n_buyers'], n_goods=cfg['n_goods'],\n",
-          "    horizon=cfg['horizon'],  discount=cfg['discount'],\n",
+          "    horizon=cfg['horizon'], discount=cfg['discount'],\n",
           "    initial_budget=cfg['initial_budget'], seed=SEED,\n",
           ")\n",
           "print(f'Auction: {auction.num_buyers}B x {auction.num_goods}G x T={auction.num_horizons}')\n",
           "print(f'Initial budgets: {auction.initial_budgets}')\n"]),
 
-    code(["# Sanity check: sample one initial state\n",
-          "key = jax.random.PRNGKey(0)\n",
+    code(["key = jax.random.PRNGKey(0)\n",
           "s0 = auction.get_initial_state(key)\n",
-          "print('Initial BudgetState:')\n",
-          "print(f'  types  = {s0.current_type}')\n",
-          "print(f'  alpha  = {s0.alpha}  (should be 0)')\n",
-          "print(f'  beta   = {s0.beta}   (should be {auction.initial_budgets})')\n"]),
+          "print(f'alpha={s0.alpha}  beta={s0.beta}  types={s0.current_type}')\n"]),
 
-    md("## Build Mechanism Network (Quick Single-Variant Check)"),
+    md("## Evaluate Baselines (No Training)"),
 
-    code(["raw_fn = VARIANT_NETWORK[VARIANT]\n",
-          "mechanism_network = hk.without_apply_rng(hk.transform(raw_fn))\n",
-          "policy_network    = build_bounded_policy_net(\n",
+    code(["print('--- Baseline B1: Static Myopic ---')\n",
+          "b1 = run_static_myopic_baseline(auction, num_samples=256, num_keys=16, base_seed=1)\n",
+          "for k, v in b1.items():\n",
+          "    if isinstance(v, float): print(f'  {k}: {v:.4f}')\n",
+          "print('--- Baseline B2: Reserve Budget ---')\n",
+          "b2 = run_reserve_budget_baseline(auction, reserve_multiplier=0.5,\n",
+          "                                  num_samples=256, num_keys=16, base_seed=1)\n",
+          "for k, v in b2.items():\n",
+          "    if isinstance(v, float): print(f'  {k}: {v:.4f}')\n",
+          "print('\\n(Use baseline revenue to calibrate profit_goal search range above.)')\n"]),
+
+    md("## Quick Single-Variant Training\n\n"
+       "Sanity check with default hyperparameters. "
+       "Skip to **Hyperparameter Search** for the full pipeline."),
+
+    code(["_mnet = hk.without_apply_rng(hk.transform(VARIANT_NETWORK[VARIANT]))\n",
+          "_pnet = build_bounded_policy_net(\n",
           "    d_priv=auction.d_priv, d_pub=auction.d_pub, G=auction.num_goods,\n",
           "    hidden=cfg['policy_hidden'], residual_init_std=cfg['residual_init_std'],\n",
           ")\n",
-          "print(f'Mechanism variant: {VARIANT}')\n"]),
-
-    md("## Evaluate Baselines (No Training Required)"),
-
-    code(["print('--- Baseline B1: Static Myopic ---')\n",
-          "b1 = run_static_myopic_baseline(auction, num_samples=128, num_keys=8, base_seed=1)\n",
-          "for k, v in b1.items():\n",
-          "    if isinstance(v, float):\n",
-          "        print(f'  {k}: {v:.4f}')\n",
-          "\n",
-          "print('--- Baseline B2: Reserve Budget ---')\n",
-          "b2 = run_reserve_budget_baseline(auction, reserve_multiplier=0.5,\n",
-          "                                  num_samples=128, num_keys=8, base_seed=1)\n",
-          "for k, v in b2.items():\n",
-          "    if isinstance(v, float):\n",
-          "        print(f'  {k}: {v:.4f}')\n"]),
-
-    md("## Quick Single-Variant Training\n\n"
-       "Run a single variant with default hyperparameters as a sanity check. "
-       "Skip to the **Hyperparameter Search** section below for the full pipeline."),
-
-    code(["logs = nested_GD_budget(\n",
-          "    auction=auction,\n",
-          "    mechanism_network=mechanism_network,\n",
-          "    policy_network=policy_network,\n",
-          "    profit_goal=cfg['profit_goal'],\n",
-          "    num_outer_epochs=cfg['num_outer_epochs'],\n",
-          "    lr_theta=cfg['lr_theta'],\n",
-          "    num_inner_steps=cfg['num_inner_steps'],\n",
-          "    lr_w=cfg['lr_w'],\n",
-          "    num_samples_train=cfg['num_samples_train'],\n",
-          "    alpha_weight=cfg['alpha_weight'],\n",
-          "    beta_weight=cfg['beta_weight'],\n",
-          "    print_iter=cfg['print_iter'],\n",
-          "    seed=SEED,\n",
+          "logs = nested_GD_budget(\n",
+          "    auction=auction, mechanism_network=_mnet, policy_network=_pnet,\n",
+          "    profit_goal=cfg['profit_goal'], num_outer_epochs=cfg['num_outer_epochs'],\n",
+          "    lr_theta=cfg['lr_theta'], num_inner_steps=cfg['num_inner_steps'],\n",
+          "    lr_w=cfg['lr_w'], num_samples_train=cfg['num_samples_train'],\n",
+          "    alpha_weight=cfg['alpha_weight'], beta_weight=cfg['beta_weight'],\n",
+          "    print_iter=cfg['print_iter'], seed=SEED,\n",
           ")\n",
           "mechanism_params = logs.pop('mechanism_params')\n",
           "policy_params    = logs.pop('policy_params')\n",
-          "print('Single-variant training complete.')\n"]),
+          "print('Quick training complete.')\n"]),
 
     code(["fig, axes = plt.subplots(1, 3, figsize=(14, 4))\n",
-          "axes[0].plot(logs['reg_plus']); axes[0].set_title('Regret+ '+ VARIANT); axes[0].set_xlabel('Epoch')\n",
-          "axes[1].plot(logs['gap_plus']); axes[1].set_title('Profit Gap+');        axes[1].set_xlabel('Epoch')\n",
-          "axes[2].plot(logs['ir']);        axes[2].set_title('IR Loss');            axes[2].set_xlabel('Epoch')\n",
-          "plt.suptitle(f'Exp 1 — Single-variant quick check: Variant {VARIANT}', y=1.02)\n",
+          "axes[0].plot(logs['reg_plus']); axes[0].set_title('Regret+ ' + VARIANT)\n",
+          "axes[1].plot(logs['gap_plus']); axes[1].set_title('Profit Gap+')\n",
+          "axes[2].plot(logs['ir']);        axes[2].set_title('IR Loss')\n",
+          "for _ax in axes: _ax.set_xlabel('Epoch')\n",
+          "plt.suptitle(f'Exp 1 — Quick check, Variant {VARIANT}', y=1.02)\n",
           "plt.tight_layout(); plt.show()\n"]),
+]
 
-    code(["eval_keys = jax.random.split(jax.random.PRNGKey(9999), 32)\n",
-          "results = eval_budget_mechanism_multikey(\n",
-          "    auction=auction,\n",
-          "    mechanism_network=mechanism_network,\n",
-          "    mechanism_params=mechanism_params,\n",
-          "    profit_goal=cfg['profit_goal'],\n",
-          "    num_samples=256, keys=eval_keys,\n",
-          "    policy_network=policy_network,\n",
-          "    policy_params=policy_params,\n",
-          ")\n",
-          "print_eval_report(results, prefix=f'Single-variant {VARIANT}: ')\n"]),
-] + hp_search_cells(
+EXP1_CELLS = _EXP1_SETUP + hp_search_cells(
     exp_label="Exp 1",
     hp_save_dir_expr="'outputs/public_budget/hparam_search'",
     final_save_dir_expr="f'outputs/public_budget/seed{SEED}/optimal'",
+    profit_goal_values=[0.8, 1.2, 1.5, 2.0],
 )
 
 
-# ==========================================================================
-# Experiment 2: Multi-good privately correlated budget auction notebook
-# ==========================================================================
+# ===========================================================================
+# Experiment 2: Multi-good privately correlated budget auction
+# ===========================================================================
 
-EXP2_CELLS = [
+_EXP2_SETUP = [
     md("# Budget Auction — Experiment 2: Multi-Good Privately Correlated Budget Auction\n\n"
-       "Compares mechanism input variants **A** (GBAM/public-balance), **B** (richer history), "
-       "**C** (full history) in a setting *beyond* Deng 2021: types are multi-dimensional and "
-       "transitions depend on private type history (private correlation).\n\n"
-       "The key hypothesis: richer history compression should outperform the GBAM-style compressed "
-       "state here, because the simple public balance is no longer theoretically sufficient."),
+       "Compares variants **A** / **B** / **C** in a setting *beyond* Deng 2021: "
+       "types are multi-dimensional and transitions are privately correlated. "
+       "The key hypothesis: richer history compression should outperform GBAM-style "
+       "compressed state here."),
 
-    code(["%pip install -q git+https://github.com/deepmind/dm-haiku\n",
-          "%pip install -q jaxopt optax flax pyyaml\n"]),
+    code(["import os\n",
+          "# 1. Force remove existing JAX/PJRT installations to ensure a clean state\n",
+          "!pip uninstall -y jax jaxlib jax-cuda12-plugin jax-cuda12-pjrt\n",
+          "\n",
+          "# 2. Install the latest JAX with full CUDA 12 support and updated libraries\n",
+          "!pip install -U \"jax[cuda12]\" dm-haiku optax flax\n",
+          "\n",
+          "print('\\n--- UPGRADE FINISHED ---')\n",
+          "print('IMPORTANT: Please go to Runtime -> Restart session now to activate the GPU drivers.')\n"]),
 
-    code(["try:\n",
+    code(["# Mount Google Drive after restarting the session\n",
+          "try:\n",
           "    from google.colab import drive\n",
           "    drive.mount('/content/drive')\n",
           "    %cd /content/drive/MyDrive/My\\ Research/Dynamic\\ Mechanism\\ Design/Budget\\ Auction\n",
@@ -700,7 +792,7 @@ EXP2_CELLS = [
           "cfg = dict(\n",
           "    n_buyers=2, n_goods=2, horizon=5, discount=0.9,\n",
           "    initial_budget=3.0,\n",
-          "    profit_goal=2.0,\n",
+          "    profit_goal=2.0,      # default; Stage 2 search may revise this\n",
           "    num_outer_epochs=2000,\n",
           "    num_inner_steps=300,\n",
           "    lr_theta=1e-4, lr_w=3e-4,\n",
@@ -715,7 +807,7 @@ EXP2_CELLS = [
 
     code(["auction = create_private_budget_multigood_auction(\n",
           "    n_buyers=cfg['n_buyers'], n_goods=cfg['n_goods'],\n",
-          "    horizon=cfg['horizon'],  discount=cfg['discount'],\n",
+          "    horizon=cfg['horizon'], discount=cfg['discount'],\n",
           "    initial_budget=cfg['initial_budget'], seed=SEED,\n",
           ")\n",
           "print(f'Auction: {auction.num_buyers}B x {auction.num_goods}G x T={auction.num_horizons}')\n",
@@ -724,88 +816,63 @@ EXP2_CELLS = [
 
     code(["key = jax.random.PRNGKey(0)\n",
           "s0 = auction.get_initial_state(key)\n",
-          "print('Initial state:')\n",
-          "print(f'  types  = {s0.current_type}   (shape: {s0.current_type.shape})')\n",
-          "print(f'  alpha  = {s0.alpha}   (should be 0)')\n",
-          "print(f'  beta   = {s0.beta}    (should be {auction.initial_budgets})')\n"]),
+          "print(f'types={s0.current_type}  alpha={s0.alpha}  beta={s0.beta}')\n"]),
 
     md("## Check Type Transition Dynamics"),
 
-    code(["# Verify private correlation: types at t+1 should be near types at t\n",
-          "from budget_auction.envs.private_budget_multigood_env import private_budget_transition_fn\n",
-          "\n",
-          "t0_types = s0.current_type  # (B, G)\n",
+    code(["from budget_auction.envs.private_budget_multigood_env import private_budget_transition_fn\n",
           "alloc_hist = jnp.zeros((auction.num_horizons, auction.num_buyers, auction.num_goods))\n",
-          "keys_trans = jax.random.split(jax.random.PRNGKey(1), 20)\n",
-          "samples = [auction.transition_function(auction, 0, t0_types, alloc_hist, k) for k in keys_trans]\n",
-          "samples = jnp.stack(samples)  # (20, B, G)\n",
-          "print(f'Current types: {t0_types}')\n",
+          "keys_t = jax.random.split(jax.random.PRNGKey(1), 20)\n",
+          "samples = jnp.stack([auction.transition_function(auction, 0, s0.current_type, alloc_hist, k)\n",
+          "                     for k in keys_t])\n",
+          "print(f'Current types: {s0.current_type}')\n",
           "print(f'Next types mean: {jnp.mean(samples, 0)}')\n",
           "print(f'Next types std:  {jnp.std(samples, 0)}')\n",
-          "print('(Should be close to current types with small sigma_no=0.01 and no allocation)')\n"]),
-
-    md("## Build Mechanism Network (Quick Single-Variant Check)"),
-
-    code(["raw_fn = VARIANT_NETWORK[VARIANT]\n",
-          "mechanism_network = hk.without_apply_rng(hk.transform(raw_fn))\n",
-          "policy_network    = build_bounded_policy_net(\n",
-          "    d_priv=auction.d_priv, d_pub=auction.d_pub, G=auction.num_goods,\n",
-          "    hidden=cfg['policy_hidden'], residual_init_std=cfg['residual_init_std'],\n",
-          ")\n",
-          "print(f'Mechanism variant: {VARIANT}  (n_goods={auction.num_goods})')\n"]),
+          "print('(Should be near current types; sigma_no=0.01 → small drift without allocation)')\n"]),
 
     md("## Evaluate Myopic Baseline"),
 
     code(["print('--- Baseline B1: Static Myopic ---')\n",
-          "b1 = run_static_myopic_baseline(auction, num_samples=128, num_keys=8, base_seed=1)\n",
+          "b1 = run_static_myopic_baseline(auction, num_samples=256, num_keys=16, base_seed=1)\n",
           "for k, v in b1.items():\n",
-          "    if isinstance(v, float): print(f'  {k}: {v:.4f}')\n"]),
+          "    if isinstance(v, float): print(f'  {k}: {v:.4f}')\n",
+          "print('\\n(Use baseline revenue to calibrate profit_goal search range above.)')\n"]),
 
     md("## Quick Single-Variant Training\n\n"
-       "Run a single variant with default hyperparameters as a sanity check. "
-       "Skip to the **Hyperparameter Search** section below for the full pipeline."),
+       "Sanity check with default hyperparameters. "
+       "Skip to **Hyperparameter Search** for the full pipeline."),
 
-    code(["logs = nested_GD_budget(\n",
-          "    auction=auction,\n",
-          "    mechanism_network=mechanism_network,\n",
-          "    policy_network=policy_network,\n",
-          "    profit_goal=cfg['profit_goal'],\n",
-          "    num_outer_epochs=cfg['num_outer_epochs'],\n",
-          "    lr_theta=cfg['lr_theta'],\n",
-          "    num_inner_steps=cfg['num_inner_steps'],\n",
-          "    lr_w=cfg['lr_w'],\n",
-          "    num_samples_train=cfg['num_samples_train'],\n",
-          "    alpha_weight=cfg['alpha_weight'],\n",
-          "    beta_weight=cfg['beta_weight'],\n",
-          "    print_iter=cfg['print_iter'],\n",
-          "    seed=SEED,\n",
+    code(["_mnet = hk.without_apply_rng(hk.transform(VARIANT_NETWORK[VARIANT]))\n",
+          "_pnet = build_bounded_policy_net(\n",
+          "    d_priv=auction.d_priv, d_pub=auction.d_pub, G=auction.num_goods,\n",
+          "    hidden=cfg['policy_hidden'], residual_init_std=cfg['residual_init_std'],\n",
+          ")\n",
+          "logs = nested_GD_budget(\n",
+          "    auction=auction, mechanism_network=_mnet, policy_network=_pnet,\n",
+          "    profit_goal=cfg['profit_goal'], num_outer_epochs=cfg['num_outer_epochs'],\n",
+          "    lr_theta=cfg['lr_theta'], num_inner_steps=cfg['num_inner_steps'],\n",
+          "    lr_w=cfg['lr_w'], num_samples_train=cfg['num_samples_train'],\n",
+          "    alpha_weight=cfg['alpha_weight'], beta_weight=cfg['beta_weight'],\n",
+          "    print_iter=cfg['print_iter'], seed=SEED,\n",
           ")\n",
           "mechanism_params = logs.pop('mechanism_params')\n",
           "policy_params    = logs.pop('policy_params')\n",
-          "print('Single-variant training complete.')\n"]),
+          "print('Quick training complete.')\n"]),
 
     code(["fig, axes = plt.subplots(1, 3, figsize=(14, 4))\n",
-          "axes[0].plot(logs['reg_plus']); axes[0].set_title('Regret+ ' + VARIANT); axes[0].set_xlabel('Epoch')\n",
-          "axes[1].plot(logs['gap_plus']); axes[1].set_title('Profit Gap+');        axes[1].set_xlabel('Epoch')\n",
-          "axes[2].plot(logs['ir']);        axes[2].set_title('IR Loss');            axes[2].set_xlabel('Epoch')\n",
-          "plt.suptitle(f'Exp 2 — Single-variant quick check: Variant {VARIANT} ({auction.num_goods} goods)', y=1.02)\n",
+          "axes[0].plot(logs['reg_plus']); axes[0].set_title('Regret+ ' + VARIANT)\n",
+          "axes[1].plot(logs['gap_plus']); axes[1].set_title('Profit Gap+')\n",
+          "axes[2].plot(logs['ir']);        axes[2].set_title('IR Loss')\n",
+          "for _ax in axes: _ax.set_xlabel('Epoch')\n",
+          "plt.suptitle(f'Exp 2 — Quick check, Variant {VARIANT} ({auction.num_goods} goods)', y=1.02)\n",
           "plt.tight_layout(); plt.show()\n"]),
+]
 
-    code(["eval_keys = jax.random.split(jax.random.PRNGKey(9999), 32)\n",
-          "results = eval_budget_mechanism_multikey(\n",
-          "    auction=auction,\n",
-          "    mechanism_network=mechanism_network,\n",
-          "    mechanism_params=mechanism_params,\n",
-          "    profit_goal=cfg['profit_goal'],\n",
-          "    num_samples=256, keys=eval_keys,\n",
-          "    policy_network=policy_network,\n",
-          "    policy_params=policy_params,\n",
-          ")\n",
-          "print_eval_report(results, prefix=f'Single-variant {VARIANT}: ')\n"]),
-] + hp_search_cells(
+EXP2_CELLS = _EXP2_SETUP + hp_search_cells(
     exp_label="Exp 2",
     hp_save_dir_expr="'outputs/private_budget_multigood/hparam_search'",
     final_save_dir_expr="f'outputs/private_budget_multigood/seed{SEED}/optimal'",
+    profit_goal_values=[1.5, 2.0, 2.5, 3.0],
 )
 
 
