@@ -74,6 +74,13 @@ def nested_GD_budget(
     tol: float = 0.1,
     patience: int = 10,
 
+    # Checkpoint recording (for binary search)
+    # Record mechanism snapshots every `checkpoint_interval` epochs when
+    # training reg <= checkpoint_thresh AND training ir <= checkpoint_thresh.
+    # Saved to logs["checkpoint_mech"] as list of dicts.
+    checkpoint_thresh: float = None,
+    checkpoint_interval: int = 50,
+
     seed: int = SEED,
 ) -> Dict:
     """
@@ -84,7 +91,8 @@ def nested_GD_budget(
     INNER: approximately maximise Regret over policy params w (oracle)
 
     Returns: logs dict with keys:
-        loss, reg, gap, ir, reg_plus, gap_plus, oracle_reg_last, good_mech
+        loss, reg, gap, ir, reg_plus, gap_plus, oracle_reg_last, good_mech,
+        checkpoint_mech (list of dicts, only if checkpoint_thresh is set)
     """
     prng = hk.PRNGSequence(seed)
 
@@ -185,8 +193,10 @@ def nested_GD_budget(
         "reg_plus": [], "gap_plus": [],
         "oracle_reg_last": [],
         "good_mech": [],
+        "checkpoint_mech": [],
     }
     sat_count = 0
+    _ckpt_enabled = checkpoint_thresh is not None
 
     # ---- Training loop ----
     t0 = time.time()
@@ -223,6 +233,20 @@ def nested_GD_budget(
             print(f"  gap (goal-profit):      {float(gap):.6f}   gap_+={float(gap_plus):.6f}")
             print(f"  ir_loss:                {float(ir):.6f}")
             print(f"  total loss:             {float(loss):.6f}")
+
+        # ---- Checkpoint recording (for binary search) ----
+        if (_ckpt_enabled
+                and (outer_epoch % checkpoint_interval == 0)
+                and (float(reg) <= checkpoint_thresh)
+                and (float(ir) <= checkpoint_thresh)):
+            logs["checkpoint_mech"].append({
+                "epoch": outer_epoch,
+                "reg_train": float(reg),
+                "ir_train": float(ir),
+                "gap_train": float(gap),
+                "mechanism_params": mechanism_params,
+                "policy_params": policy_params_star,
+            })
 
         if early_stop:
             ok = (float(reg) <= tol) and (float(ir) <= tol * 10) and (float(gap) <= tol)
