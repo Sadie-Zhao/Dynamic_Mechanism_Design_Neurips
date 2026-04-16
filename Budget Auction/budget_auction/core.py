@@ -703,64 +703,112 @@ class BudgetSimulator:
         policy: BoundedContPolicy,
         key: jax.random.PRNGKey,
     ) -> float:
-        """Cumulative regret for a single episode.
+        """Cumulative regret for a single episode — theoretically correct IC formulation.
 
-        Runs two PARALLEL trajectories from the same initial state:
-          - Deviation:  all buyers follow `policy`
-          - Truthful:   all buyers report their true types
+        Runs B+1 parallel trajectories from the same initial state:
+          - Truthful trajectory:           all buyers report truthfully
+          - Deviation trajectory i (0..B-1): buyer i follows policy,
+                                             all j≠i report truthfully
 
-        Regret = sum_t gamma^t * sum_i [u_i(dev; s_t^dev) - u_i(truth; s_t^truth)]
+        Regret = Σ_i [ U_i(π_i^dev, π_{-i}^truth) - U_i(π^truth) ]
 
-        Unlike the bandit auction, the budget-auction state (alpha, beta) evolves
-        differently under deviation vs truthful play because payments differ.
-        Using the deviation-path state to evaluate the truthful baseline — as
-        the single-trajectory approach does — systematically underestimates regret:
-        a conservative deviator accumulates more budget (higher beta^dev), making
-        the truthful arm appear artificially more valuable at that state.
+        where each term uses the trajectory where only buyer i deviates.
+        This is the standard definition of sum-of-IC-regrets in mechanism design.
 
-        Running two separate trajectories eliminates this bias.
+        Why B+1 trajectories are necessary
+        ------------------------------------
+        Budget-auction states (alpha, beta) depend on payments, which depend on
+        reports.  Evaluating the truthful baseline for buyer i at the wrong state
+        path systematically biases the estimate.
+
+        (a) Single-trajectory (old): truthful baseline evaluated at s_t^{all-dev}
+            — inflated baseline, underestimates regret.
+
+        (b) Two-trajectory (prev fix): deviation = all-deviate, truth = all-truthful
+            — correct states, but the deviation conflates individual with group IC.
+            If both buyers deviate simultaneously, cross-buyer effects contaminate
+            the regret signal; the oracle maximizes group deviation, not individual.
+
+        (c) This implementation: buyer i deviates against truthful opponents on a
+            trajectory where only i's reports differ from truth.  The truthful
+            baseline is evaluated on the fully-truthful trajectory.  This is the
+            exact definition that appears in the IC constraint.
+
+        Cost: B+1 mechanism evaluations per step (vs 2 in (b), 1 in (a)).
+        For B=2: 3 evals/step.  B unrolled statically at trace time.
         """
         discount = auction.discount
+        B = auction.num_buyers
 
         def episode_step(t, carry):
-            cumul_regret, dev_state, dev_belief, truth_state, key = carry
-            key, k_report, k_dev_next, k_truth_next = jax.random.split(key, 4)
+            cumul_regret, dev_states, dev_beliefs, truth_state, key = carry
+            # dev_states / dev_beliefs: lists of length B, one per buyer's trajectory.
+            # truth_state: single BudgetState for the fully-truthful trajectory.
 
-            # --- Deviation trajectory step ---
-            dev_report = policy(dev_belief, auction, k_report)        # (B, G)
-            dev_alloc, dev_pay = mechanism(dev_state, dev_report, auction)
-            dev_rewards = BudgetSimulator.get_rewards(
-                auction, dev_state, dev_alloc, dev_pay
-            )                                                          # (B,)
+            key, k_policy, k_truth_next = jax.random.split(key, 3)
+            dev_next_keys = jax.random.split(key, B)
 
-            # --- Truthful trajectory step (independent state path) ---
-            truth_report = truth_state.current_type                   # (B, G)
-            truth_alloc, truth_pay = mechanism(truth_state, truth_report, auction)
+            # ---- Truthful trajectory step ----
+            truth_types = truth_state.current_type                     # (B, G)
+            truth_alloc, truth_pay = mechanism(truth_state, truth_types, auction)
             truth_rewards = BudgetSimulator.get_rewards(
-                auction, truth_state, truth_alloc, truth_pay
-            )                                                          # (B,)
+                auction, truth_state, truth_alloc, truth_pay           # (B,)
+            )
+            next_truth_state = auction.get_next_budget_state(
+                truth_state, truth_types, truth_alloc, truth_pay, k_truth_next
+            )
 
-            # Regret: sum of per-buyer deviation gains
+            # ---- Per-buyer deviation trajectories ----
+            # Trajectory i: buyer i reports policy(belief_i)[i],
+            #               buyers j≠i report their true types.
+            dev_rewards_list = []
+            next_dev_states  = []
+            next_dev_beliefs = []
+
+            for i in range(B):
+                # Policy is called with buyer i's full belief state.
+                # We use only row i of the output as buyer i's deviation report.
+                all_reports_i = policy(dev_beliefs[i], auction, k_policy)  # (B, G)
+
+                # Build the report matrix: row i = deviation, rows j≠i = truth
+                report_i = dev_states[i].current_type.at[i].set(
+                    all_reports_i[i]                                   # (G,)
+                )                                                      # (B, G)
+
+                alloc_i, pay_i = mechanism(dev_states[i], report_i, auction)
+
+                # Only buyer i's utility enters regret_i
+                util_i = (
+                    jnp.sum(alloc_i[i] * dev_states[i].current_type[i])
+                    - pay_i[i]
+                )                                                      # scalar
+                dev_rewards_list.append(util_i)
+
+                ns_i = auction.get_next_budget_state(
+                    dev_states[i], report_i, alloc_i, pay_i, dev_next_keys[i]
+                )
+                # Belief for buyer i reflects what they observe when deviating:
+                # public embed ← allocation under (dev_i, truth_{-i})
+                # private embed i ← their own type/budget trajectory
+                nb_i = auction.get_next_belief_state(
+                    dev_beliefs[i], report_i, alloc_i, ns_i
+                )
+                next_dev_states.append(ns_i)
+                next_dev_beliefs.append(nb_i)
+
+            dev_rewards  = jnp.stack(dev_rewards_list)                 # (B,)
             cumul_regret = cumul_regret + (discount ** t) * jnp.sum(
                 dev_rewards - truth_rewards
             )
 
-            # Advance deviation state + belief
-            next_dev_state = auction.get_next_budget_state(
-                dev_state, dev_report, dev_alloc, dev_pay, k_dev_next
-            )
-            next_dev_belief = auction.get_next_belief_state(
-                dev_belief, dev_report, dev_alloc, next_dev_state
-            )
+            return (cumul_regret, next_dev_states, next_dev_beliefs,
+                    next_truth_state, key)
 
-            # Advance truthful state (separate random draw for type transition)
-            next_truth_state = auction.get_next_budget_state(
-                truth_state, truth_report, truth_alloc, truth_pay, k_truth_next
-            )
+        # All B deviation trajectories start from the same initial state/belief.
+        init_dev_states  = [state        for _ in range(B)]
+        init_dev_beliefs = [belief_state for _ in range(B)]
+        init = (0.0, init_dev_states, init_dev_beliefs, state, key)
 
-            return (cumul_regret, next_dev_state, next_dev_belief, next_truth_state, key)
-
-        init = (0.0, state, belief_state, state, key)
         cumul_regret, _, _, _, _ = jax.lax.fori_loop(
             0, auction.num_horizons, episode_step, init
         )
