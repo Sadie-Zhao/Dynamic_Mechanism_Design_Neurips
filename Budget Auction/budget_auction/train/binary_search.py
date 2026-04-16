@@ -58,13 +58,13 @@ DEFAULT_BS_CFG = dict(
     beta_weight     = 500.0,
 
     # Inner oracle steps
-    num_inner_steps = 300,
+    num_inner_steps = 600,
 
     # Training epochs per binary-search trial
     num_outer_epochs = 2000,
 
     # Batch size
-    num_samples_train = 64,
+    num_samples_train = 128,
 
     # Checkpoint recording: save when train reg AND train ir both ≤ this
     checkpoint_thresh    = 0.15,

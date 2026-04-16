@@ -55,12 +55,12 @@ def nested_GD_budget(
     lr_theta: float = 1e-4,
 
     # Inner loop (oracle policy)
-    num_inner_steps: int = 300,
+    num_inner_steps: int = 600,
     lr_w: float = 3e-4,
-    inner_opt_reset_each_outer: bool = False,
+    inner_opt_reset_each_outer: bool = True,
 
     # Monte Carlo
-    num_samples_train: int = 64,
+    num_samples_train: int = 128,
 
     # Loss weights
     alpha_weight: float = 1e5,
