@@ -703,29 +703,65 @@ class BudgetSimulator:
         policy: BoundedContPolicy,
         key: jax.random.PRNGKey,
     ) -> float:
+        """Cumulative regret for a single episode.
+
+        Runs two PARALLEL trajectories from the same initial state:
+          - Deviation:  all buyers follow `policy`
+          - Truthful:   all buyers report their true types
+
+        Regret = sum_t gamma^t * sum_i [u_i(dev; s_t^dev) - u_i(truth; s_t^truth)]
+
+        Unlike the bandit auction, the budget-auction state (alpha, beta) evolves
+        differently under deviation vs truthful play because payments differ.
+        Using the deviation-path state to evaluate the truthful baseline — as
+        the single-trajectory approach does — systematically underestimates regret:
+        a conservative deviator accumulates more budget (higher beta^dev), making
+        the truthful arm appear artificially more valuable at that state.
+
+        Running two separate trajectories eliminates this bias.
+        """
         discount = auction.discount
 
         def episode_step(t, carry):
-            cumul_regret, (budget_state, belief_state), key = carry
-            key, k_report, k_regret, k_step = jax.random.split(key, 4)
+            cumul_regret, dev_state, dev_belief, truth_state, key = carry
+            key, k_report, k_dev_next, k_truth_next = jax.random.split(key, 4)
 
-            report = policy(belief_state, auction, k_report)
-            allocation, payment = mechanism(budget_state, report, auction)
-            regret = BudgetSimulator.get_regret(
-                auction, budget_state, mechanism, report, k_regret
-            )
-            cumul_regret = cumul_regret + (discount ** t) * regret
+            # --- Deviation trajectory step ---
+            dev_report = policy(dev_belief, auction, k_report)        # (B, G)
+            dev_alloc, dev_pay = mechanism(dev_state, dev_report, auction)
+            dev_rewards = BudgetSimulator.get_rewards(
+                auction, dev_state, dev_alloc, dev_pay
+            )                                                          # (B,)
 
-            next_budget_state = auction.get_next_budget_state(
-                budget_state, report, allocation, payment, k_step
-            )
-            next_belief_state = auction.get_next_belief_state(
-                belief_state, report, allocation, next_budget_state
-            )
-            return (cumul_regret, (next_budget_state, next_belief_state), key)
+            # --- Truthful trajectory step (independent state path) ---
+            truth_report = truth_state.current_type                   # (B, G)
+            truth_alloc, truth_pay = mechanism(truth_state, truth_report, auction)
+            truth_rewards = BudgetSimulator.get_rewards(
+                auction, truth_state, truth_alloc, truth_pay
+            )                                                          # (B,)
 
-        init = (0.0, (state, belief_state), key)
-        cumul_regret, _, _ = jax.lax.fori_loop(
+            # Regret: sum of per-buyer deviation gains
+            cumul_regret = cumul_regret + (discount ** t) * jnp.sum(
+                dev_rewards - truth_rewards
+            )
+
+            # Advance deviation state + belief
+            next_dev_state = auction.get_next_budget_state(
+                dev_state, dev_report, dev_alloc, dev_pay, k_dev_next
+            )
+            next_dev_belief = auction.get_next_belief_state(
+                dev_belief, dev_report, dev_alloc, next_dev_state
+            )
+
+            # Advance truthful state (separate random draw for type transition)
+            next_truth_state = auction.get_next_budget_state(
+                truth_state, truth_report, truth_alloc, truth_pay, k_truth_next
+            )
+
+            return (cumul_regret, next_dev_state, next_dev_belief, next_truth_state, key)
+
+        init = (0.0, state, belief_state, state, key)
+        cumul_regret, _, _, _, _ = jax.lax.fori_loop(
             0, auction.num_horizons, episode_step, init
         )
         return cumul_regret
