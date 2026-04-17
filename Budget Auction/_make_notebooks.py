@@ -16,6 +16,63 @@ def md(text):
             "source": text if isinstance(text, list) else [text]}
 
 
+def env_setup_cells():
+    """Two cells that replace the old hard-coded !pip-install + drive-mount pair.
+
+    Cell 1 — user sets RUN_ENV ('colab' | 'local') and LOCAL_PROJECT_DIR.
+    Cell 2 — dispatches: installs packages + mounts Drive for Colab;
+              optionally changes directory for local runs.
+    """
+    return [
+        code([
+            "# ── Environment Selection ────────────────────────────────────────────────────\n",
+            "# 'colab'  → installs packages (JAX CUDA 12) and mounts Google Drive\n",
+            "# 'local'  → skips install; optionally changes working directory\n",
+            "# ─────────────────────────────────────────────────────────────────────────────\n",
+            "RUN_ENV = 'colab'   # ← change to 'local' for a local GPU run\n",
+            "\n",
+            "# For local runs: absolute path to the Budget Auction project root.\n",
+            "# Set to None if you launch Jupyter from that directory.\n",
+            "LOCAL_PROJECT_DIR = None\n",
+            "# Windows example:\n",
+            "#   LOCAL_PROJECT_DIR = r'E:\\Research\\code\\Dynamic Mechanism Design\\Budget Auction'\n",
+            "# Linux / Mac example:\n",
+            "#   LOCAL_PROJECT_DIR = '/home/user/research/budget_auction'\n",
+        ]),
+        code([
+            "import os, sys, subprocess\n",
+            "\n",
+            "if RUN_ENV == 'colab':\n",
+            "    print('Installing JAX CUDA 12 + dependencies ...')\n",
+            "    subprocess.check_call(\n",
+            "        [sys.executable, '-m', 'pip', 'uninstall', '-y',\n",
+            "         'jax', 'jaxlib', 'jax-cuda12-plugin', 'jax-cuda12-pjrt'],\n",
+            "        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n",
+            "    subprocess.check_call(\n",
+            "        [sys.executable, '-m', 'pip', 'install', '-qU',\n",
+            "         'jax[cuda12]', 'dm-haiku', 'optax', 'flax'])\n",
+            "    print('Install finished.')\n",
+            "    print('IMPORTANT: Runtime → Restart session, then re-run from this cell.')\n",
+            "    try:\n",
+            "        from google.colab import drive\n",
+            "        drive.mount('/content/drive')\n",
+            "        os.chdir('/content/drive/MyDrive/My Research/Dynamic Mechanism Design/Budget Auction')\n",
+            "        print(f'Working directory: {os.getcwd()}')\n",
+            "    except ImportError:\n",
+            "        print('(Drive mount skipped — restart session first if on Colab.)')\n",
+            "elif RUN_ENV == 'local':\n",
+            "    if LOCAL_PROJECT_DIR is not None:\n",
+            "        os.chdir(LOCAL_PROJECT_DIR)\n",
+            "    print(f'Working directory: {os.getcwd()}')\n",
+            "    print('Local run — package install skipped.')\n",
+            "    print('One-time install:  pip install \"jax[cuda12]\" dm-haiku optax flax')\n",
+            "    print('GPU check:         python -c \"import jax; print(jax.devices())\"')\n",
+            "else:\n",
+            "    raise ValueError(f'Unknown RUN_ENV: {RUN_ENV!r}  — set to \"colab\" or \"local\"')\n",
+        ]),
+    ]
+
+
 def notebook(cells):
     return {
         "nbformat": 4, "nbformat_minor": 5,
@@ -608,25 +665,9 @@ _EXP1_SETUP = [
        "Compares mechanism input variants **A** (GBAM/public-balance), **B** (richer history), "
        "**C** (full history) in a Deng-2021-style setting where the GBAM state should be "
        "theoretically sufficient.\n\n"
-       "Run in Google Colab with GPU runtime for best performance."),
+       "Set `RUN_ENV = 'colab'` for Google Colab GPU or `'local'` for a local GPU machine."),
 
-    code(["import os\n",
-          "# 1. Force remove existing JAX/PJRT installations to ensure a clean state\n",
-          "!pip uninstall -y jax jaxlib jax-cuda12-plugin jax-cuda12-pjrt\n",
-          "\n",
-          "# 2. Install the latest JAX with full CUDA 12 support and updated libraries\n",
-          "!pip install -U \"jax[cuda12]\" dm-haiku optax flax\n",
-          "\n",
-          "print('\\n--- UPGRADE FINISHED ---')\n",
-          "print('IMPORTANT: Please go to Runtime -> Restart session now to activate the GPU drivers.')\n"]),
-
-    code(["# Mount Google Drive after restarting the session\n",
-          "try:\n",
-          "    from google.colab import drive\n",
-          "    drive.mount('/content/drive')\n",
-          "    %cd /content/drive/MyDrive/My\\ Research/Dynamic\\ Mechanism\\ Design/Budget\\ Auction\n",
-          "except ImportError:\n",
-          "    pass  # running locally\n"]),
+    *env_setup_cells(),
 
     code(["from typing import Dict\n",
           "import jax\n",
@@ -840,25 +881,10 @@ _EXP2_SETUP = [
        "Compares variants **A** / **B** / **C** in a setting *beyond* Deng 2021: "
        "types are multi-dimensional and transitions are privately correlated. "
        "The key hypothesis: richer history compression should outperform GBAM-style "
-       "compressed state here."),
+       "compressed state here.\n\n"
+       "Set `RUN_ENV = 'colab'` for Google Colab GPU or `'local'` for a local GPU machine."),
 
-    code(["import os\n",
-          "# 1. Force remove existing JAX/PJRT installations to ensure a clean state\n",
-          "!pip uninstall -y jax jaxlib jax-cuda12-plugin jax-cuda12-pjrt\n",
-          "\n",
-          "# 2. Install the latest JAX with full CUDA 12 support and updated libraries\n",
-          "!pip install -U \"jax[cuda12]\" dm-haiku optax flax\n",
-          "\n",
-          "print('\\n--- UPGRADE FINISHED ---')\n",
-          "print('IMPORTANT: Please go to Runtime -> Restart session now to activate the GPU drivers.')\n"]),
-
-    code(["# Mount Google Drive after restarting the session\n",
-          "try:\n",
-          "    from google.colab import drive\n",
-          "    drive.mount('/content/drive')\n",
-          "    %cd /content/drive/MyDrive/My\\ Research/Dynamic\\ Mechanism\\ Design/Budget\\ Auction\n",
-          "except ImportError:\n",
-          "    pass\n"]),
+    *env_setup_cells(),
 
     code(["from typing import Dict\n",
           "import jax\n",
