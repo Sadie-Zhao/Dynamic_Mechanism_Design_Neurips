@@ -1040,23 +1040,9 @@ def binary_search_cells(exp_label, exp_env_import, create_auction_call,
            "then run all cells top-to-bottom."),
 
         # ================================================================
-        # Install
+        # Environment setup
         # ================================================================
-        code(["import os\n",
-              "!pip uninstall -y jax jaxlib jax-cuda12-plugin jax-cuda12-pjrt\n",
-              "!pip install -U \"jax[cuda12]\" dm-haiku optax flax\n",
-              "print('\\n--- UPGRADE FINISHED ---')\n",
-              "print('IMPORTANT: Please go to Runtime -> Restart session now.')\n"]),
-
-        # ================================================================
-        # Mount Drive
-        # ================================================================
-        code(["try:\n",
-              "    from google.colab import drive\n",
-              "    drive.mount('/content/drive')\n",
-              "    %cd /content/drive/MyDrive/My\\ Research/Dynamic\\ Mechanism\\ Design/Budget\\ Auction\n",
-              "except ImportError:\n",
-              "    pass\n"]),
+        *env_setup_cells(),
 
         # ================================================================
         # Imports
