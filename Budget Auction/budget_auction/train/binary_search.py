@@ -77,8 +77,12 @@ DEFAULT_BS_CFG = dict(
     pg_tol  = 0.1,
 
     # Feasibility thresholds (eval loss)
-    ic_thresh = 0.05,
-    ir_thresh = 0.05,
+    ic_thresh  = 0.05,
+    # Revenue gap threshold: a checkpoint is feasible only if
+    #   revenue_eval >= profit_goal - gap_thresh
+    # Prevents a low-revenue IC solution from falsely pushing pg_lo upward.
+    # Natural default: same as pg_tol so feasibility means "within search resolution".
+    gap_thresh = 0.1,
 
     # IC re-optimisation at eval time (separate from the training inner loop).
     # For each checkpoint, the oracle policy is re-solved from scratch against
@@ -270,8 +274,8 @@ def evaluate_checkpoint_list(
     eval_keys = jax.random.split(
         jax.random.PRNGKey(seed + 77777), cfg["eval_num_keys"]
     )
-    ic_thresh = cfg["ic_thresh"]
-    ir_thresh = cfg["ir_thresh"]
+    ic_thresh  = cfg["ic_thresh"]
+    gap_thresh = cfg.get("gap_thresh", 0.1)
 
     results = []
     for i, ckpt in enumerate(checkpoints):
@@ -309,27 +313,31 @@ def evaluate_checkpoint_list(
         )
 
         rec = dict(ckpt)
-        rec["revenue_eval"]     = ev["profit_stats"]["mean"]      if "profit_stats"      in ev else float("nan")
+        rec["revenue_eval"]        = ev["profit_stats"]["mean"]         if "profit_stats"         in ev else float("nan")
         # Use the max regret from reopt (highest across restarts) as the IC estimate.
         # Also record the multi-key regret mean from eval for comparison.
-        rec["regret_reopt"]     = best_regret
-        rec["regret_eval"]      = ev["regret_stats"]["mean"]      if "regret_stats"      in ev else float("nan")
-        rec["ir_loss_eval"]     = ev["ir_loss_stats"]["mean"]     if "ir_loss_stats"     in ev else float("nan")
-        rec["budget_viol_eval"] = ev["budget_viol_stats"]["mean"] if "budget_viol_stats" in ev else float("nan")
-        rec["ir_viol_eval"]     = ev["ir_viol_stats"]["mean"]     if "ir_viol_stats"     in ev else float("nan")
-        # Feasibility: use the stricter of reopt regret and multi-key regret mean
-        _ic_for_check = max(best_regret, rec["regret_eval"])
-        rec["feasible"] = (
-            _ic_for_check <= ic_thresh and rec["ir_loss_eval"] <= ir_thresh
-        )
+        rec["regret_reopt"]        = best_regret
+        rec["regret_eval"]         = ev["regret_stats"]["mean"]         if "regret_stats"         in ev else float("nan")
+        # ir_loss = relu(-reward): always 0 by payment-feasibility construction; used for pass/fail.
+        rec["ir_loss_eval"]        = ev["ir_loss_stats"]["mean"]        if "ir_loss_stats"        in ev else float("nan")
+        # buyer_surplus = sum(reward): informative positive metric shown in plots.
+        rec["buyer_surplus_eval"]  = ev["buyer_surplus_stats"]["mean"]  if "buyer_surplus_stats"  in ev else float("nan")
+        rec["budget_viol_eval"]    = ev["budget_viol_stats"]["mean"]    if "budget_viol_stats"    in ev else float("nan")
+        rec["ir_viol_eval"]        = ev["ir_viol_stats"]["mean"]        if "ir_viol_stats"        in ev else float("nan")
+        # Feasibility: IC must be small AND revenue must be within gap_thresh of profit_goal.
+        # The gap check prevents a low-revenue IC solution from falsely marking this
+        # profit_goal feasible and inflating pg_lo.
+        _ic_for_check  = max(best_regret, rec["regret_eval"])
+        _revenue_gap   = profit_goal - rec["revenue_eval"]
+        rec["feasible"] = (_ic_for_check <= ic_thresh) and (_revenue_gap <= gap_thresh)
 
         results.append(rec)
         if verbose:
             flag = "PASS" if rec["feasible"] else "fail"
             print(f"    [{flag}] epoch={rec['epoch']:4d}  "
-                  f"rev={rec['revenue_eval']:.4f}  "
+                  f"rev={rec['revenue_eval']:.4f}  gap={_revenue_gap:.4f}  "
                   f"IC_reopt={best_regret:.4f}  IC_eval={rec['regret_eval']:.4f}  "
-                  f"IR={rec['ir_loss_eval']:.4f}")
+                  f"surplus={rec.get('buyer_surplus_eval', float('nan')):.4f}")
 
     # Sort: feasible first (by revenue desc), then infeasible
     results.sort(key=lambda r: (not r["feasible"], -r["revenue_eval"]))
@@ -411,11 +419,11 @@ def run_binary_search(
         if t.get("any_feasible") and t.get("best_revenue_eval") is not None:
             if best_mech_info is None or t["best_revenue_eval"] > best_mech_info.get("revenue_eval", -1):
                 best_mech_info = {
-                    "profit_goal":   t["profit_goal"],
-                    "revenue_eval":  t["best_revenue_eval"],
-                    "regret_eval":   t["best_regret_eval"],
-                    "ir_loss_eval":  t["best_ir_loss_eval"],
-                    "mech_pkl":      t.get("best_mech_pkl"),
+                    "profit_goal":        t["profit_goal"],
+                    "revenue_eval":       t["best_revenue_eval"],
+                    "regret_eval":        t["best_regret_eval"],
+                    "buyer_surplus_eval": t.get("best_buyer_surplus_eval"),
+                    "mech_pkl":           t.get("best_mech_pkl"),
                 }
 
     t0_global = time.time()
@@ -487,47 +495,47 @@ def run_binary_search(
         any_feasible   = len(feasible_ckpts) > 0
 
         # Save best mechanism for this trial
-        best_pkl = None
-        best_rev = None
-        best_reg = None
-        best_ir  = None
+        best_pkl     = None
+        best_rev     = None
+        best_reg     = None
+        best_surplus = None
         if any_feasible:
-            best_ckpt = feasible_ckpts[0]   # sorted by revenue desc
-            best_rev  = best_ckpt["revenue_eval"]
-            best_reg  = best_ckpt["regret_eval"]
-            best_ir   = best_ckpt["ir_loss_eval"]
-            best_pkl  = os.path.join(save_dir, f"best_mech_pg{pg_mid:.3f}.pkl")
+            best_ckpt    = feasible_ckpts[0]   # sorted by revenue desc
+            best_rev     = best_ckpt["revenue_eval"]
+            best_reg     = best_ckpt["regret_eval"]
+            best_surplus = best_ckpt.get("buyer_surplus_eval")
+            best_pkl     = os.path.join(save_dir, f"best_mech_pg{pg_mid:.3f}.pkl")
             with open(best_pkl, "wb") as f_pkl:
                 pickle.dump({
-                    "profit_goal":      pg_mid,
-                    "mechanism_params": best_ckpt["mechanism_params"],
-                    "policy_params":    best_ckpt["policy_params"],
-                    "epoch":            best_ckpt["epoch"],
-                    "revenue_eval":     best_rev,
-                    "regret_eval":      best_reg,
-                    "ir_loss_eval":     best_ir,
+                    "profit_goal":         pg_mid,
+                    "mechanism_params":    best_ckpt["mechanism_params"],
+                    "policy_params":       best_ckpt["policy_params"],
+                    "epoch":               best_ckpt["epoch"],
+                    "revenue_eval":        best_rev,
+                    "regret_eval":         best_reg,
+                    "buyer_surplus_eval":  best_surplus,
                 }, f_pkl)
             if verbose:
                 print(f"  [binary_search] FEASIBLE  rev={best_rev:.4f}  "
-                      f"IC={best_reg:.4f}  IR={best_ir:.4f}  "
+                      f"IC={best_reg:.4f}  surplus={best_surplus:.4f}  "
                       f"→ saved {best_pkl}")
             pg_lo = pg_mid
 
             if (best_mech_info is None
                     or best_rev > best_mech_info.get("revenue_eval", -1)):
                 best_mech_info = {
-                    "profit_goal":  pg_mid,
-                    "revenue_eval": best_rev,
-                    "regret_eval":  best_reg,
-                    "ir_loss_eval": best_ir,
-                    "mech_pkl":     best_pkl,
+                    "profit_goal":        pg_mid,
+                    "revenue_eval":       best_rev,
+                    "regret_eval":        best_reg,
+                    "buyer_surplus_eval": best_surplus,
+                    "mech_pkl":           best_pkl,
                 }
         else:
             if verbose:
                 print(f"  [binary_search] INFEASIBLE — best eval: "
                       f"rev={eval_results[0]['revenue_eval']:.4f}  "
                       f"IC={eval_results[0]['regret_eval']:.4f}  "
-                      f"IR={eval_results[0]['ir_loss_eval']:.4f}")
+                      f"surplus={eval_results[0].get('buyer_surplus_eval', float('nan')):.4f}")
             pg_hi = pg_mid
 
         # Save full per-epoch training curves (reg, ir, gap, loss) as JSON
@@ -555,12 +563,13 @@ def run_binary_search(
             # Eval results per checkpoint (aligned to checkpoints list order)
             "checkpoints_eval": [
                 {
-                    "epoch":          r["epoch"],
-                    "revenue_eval":   r["revenue_eval"],
-                    "regret_reopt":   r.get("regret_reopt"),   # re-optimised oracle regret
-                    "regret_eval":    r["regret_eval"],         # multi-key mean with reopt oracle
-                    "ir_loss_eval":   r["ir_loss_eval"],
-                    "feasible":       r["feasible"],
+                    "epoch":               r["epoch"],
+                    "revenue_eval":        r["revenue_eval"],
+                    "regret_reopt":        r.get("regret_reopt"),
+                    "regret_eval":         r["regret_eval"],
+                    "ir_loss_eval":        r["ir_loss_eval"],        # relu(-reward), always 0
+                    "buyer_surplus_eval":  r.get("buyer_surplus_eval"),  # sum(reward), informative
+                    "feasible":            r["feasible"],
                 }
                 for r in eval_results
             ],
@@ -570,12 +579,12 @@ def run_binary_search(
 
         # Serialisable trial record (no JAX arrays)
         trial_record = {
-            "profit_goal":        pg_mid,
-            "any_feasible":       any_feasible,
-            "best_revenue_eval":  best_rev,
-            "best_regret_eval":   best_reg,
-            "best_ir_loss_eval":  best_ir,
-            "best_mech_pkl":      best_pkl,
+            "profit_goal":             pg_mid,
+            "any_feasible":            any_feasible,
+            "best_revenue_eval":       best_rev,
+            "best_regret_eval":        best_reg,
+            "best_buyer_surplus_eval": best_surplus,
+            "best_mech_pkl":           best_pkl,
             "training_curves":    _curves_path,
             "num_checkpoints":    len(checkpoints),
             "num_feasible_ckpts": len(feasible_ckpts),
@@ -616,7 +625,7 @@ def run_binary_search(
         if best_mech_info:
             print(f"  Best mechanism: rev={best_mech_info['revenue_eval']:.4f}  "
                   f"IC={best_mech_info['regret_eval']:.4f}  "
-                  f"IR={best_mech_info['ir_loss_eval']:.4f}")
+                  f"surplus={best_mech_info.get('buyer_surplus_eval', float('nan')):.4f}")
             print(f"  Saved to: {best_mech_info['mech_pkl']}")
         print(f"  Summary: {summary_path}")
 

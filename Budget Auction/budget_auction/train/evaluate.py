@@ -82,7 +82,7 @@ def eval_budget_mechanism_multikey(
     if (policy_network is not None) and (policy_params is not None):
         policy = BoundedContPolicy(policy_network, policy_params)
 
-    profits, gaps, ir_losses, regrets, bv_rates, iv_rates = [], [], [], [], [], []
+    profits, gaps, ir_losses, surpluses, regrets, bv_rates, iv_rates = [], [], [], [], [], [], []
 
     for k in keys:
         k1, k2, k3, k4 = jax.random.split(k, 4)
@@ -95,7 +95,11 @@ def eval_budget_mechanism_multikey(
         rewards = BudgetSimulator.estimate_cumulative_rewards(
             auction, mechanism, num_samples=num_samples, key=k2
         )
-        ir = jnp.sum(jnp.abs(rewards))
+        # IR loss for pass/fail: relu(-reward). Always 0 by construction of the
+        # payment feasibility transform under truthful play.
+        ir = jnp.sum(jax.nn.relu(-rewards))
+        # Buyer surplus: total positive utility retained by buyers (always >= 0).
+        surplus = jnp.sum(rewards)
 
         bv, iv = BudgetSimulator.estimate_violation_rates(
             auction, mechanism, num_samples=num_samples, key=k3
@@ -104,6 +108,7 @@ def eval_budget_mechanism_multikey(
         profits.append(prof)
         gaps.append(gap)
         ir_losses.append(ir)
+        surpluses.append(surplus)
         bv_rates.append(bv)
         iv_rates.append(iv)
 
@@ -116,6 +121,7 @@ def eval_budget_mechanism_multikey(
     profits = _stack(profits)
     gaps = _stack(gaps)
     ir_losses = _stack(ir_losses)
+    surpluses = _stack(surpluses)
     bv_rates = jnp.array(bv_rates)
     iv_rates = jnp.array(iv_rates)
 
@@ -126,8 +132,12 @@ def eval_budget_mechanism_multikey(
         "gap_stats": _summary_stats(gaps),
         "gap_plus": jnp.maximum(0.0, gaps),
         "gap_plus_stats": _summary_stats(jnp.maximum(0.0, gaps)),
+        # IR loss = relu(-reward): always 0 by construction; used for pass/fail.
         "ir_loss": ir_losses,
         "ir_loss_stats": _summary_stats(ir_losses),
+        # Buyer surplus = sum(reward): positive, informative metric.
+        "buyer_surplus": surpluses,
+        "buyer_surplus_stats": _summary_stats(surpluses),
         "budget_viol_rate": bv_rates,
         "budget_viol_stats": _summary_stats(bv_rates),
         "ir_viol_rate": iv_rates,
@@ -153,8 +163,8 @@ def print_eval_report(results: Dict, prefix: str = ""):
     print(f"\n{'='*60}")
     print(f"  {prefix}Evaluation Report")
     print(f"{'='*60}")
-    for key in ["profit_stats", "gap_plus_stats", "ir_loss_stats",
-                "budget_viol_stats", "ir_viol_stats"]:
+    for key in ["profit_stats", "gap_plus_stats", "buyer_surplus_stats",
+                "ir_loss_stats", "budget_viol_stats", "ir_viol_stats"]:
         if key in results:
             label = key.replace("_stats", "").replace("_", " ")
             s = results[key]
