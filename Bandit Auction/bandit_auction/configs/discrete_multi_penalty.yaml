@@ -1,0 +1,34 @@
+experiment: discrete_multi
+method: penalty
+
+# Environment
+n_buyers: 2
+n_goods: 2
+horizon: 5
+discount: 0.9
+type_values_per_good: [1.0, 2.0, 3.0]
+allocation_cost: 0.1
+
+# Training
+num_outer_epochs: 2000
+outer_steps_per_epoch: 1
+lr_theta: 1.0e-4
+num_inner_steps: 400
+lr_w: 1.0e-3
+num_samples_train: 64
+
+# Loss weights: L = -Profit + alpha*[Regret]+ + beta*IR
+alpha: 1.0
+beta: 1.0
+
+# Checkpointing
+checkpoint_thresh: 0.15
+checkpoint_interval: 50
+
+# Policy network (discrete)
+policy_hidden: 128
+
+# Diagnostics
+print_iter: 50
+
+output_dir: outputs/discrete_multi/penalty

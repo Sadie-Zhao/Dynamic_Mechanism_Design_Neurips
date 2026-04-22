@@ -1,0 +1,8 @@
+{
+  "final_profit": 5.774714469909668,
+  "final_reg": 0.07206699252128601,
+  "final_ir": 0.7670953273773193,
+  "seed": 0,
+  "experiment": "discrete_single",
+  "method": "penalty"
+}
