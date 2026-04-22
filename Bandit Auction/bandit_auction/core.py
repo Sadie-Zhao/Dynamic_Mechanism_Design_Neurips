@@ -789,65 +789,52 @@ class AuctionSimulator:
         key: jax.random.PRNGKey,
         update_belief_fn: Callable = None,
     ) -> float:
-        """Cumulative BNE regret: Σ_i [U_i(dev_i, truth_{-i}) - U_i(truth)].
+        """Cumulative BNE regret via per-step counterfactual evaluation.
 
-        Runs B+1 parallel trajectories:
-          - Truthful trajectory: all buyers report v_{i,t}
-          - Deviation trajectory i: buyer i uses oracle policy, others truthful
+        At each step t along the oracle's single trajectory:
+            regret_t = sum_i [ U_i(oracle_i, truth_{-i}, s_t) - U_i(truth, s_t) ]
 
-        update_belief_fn: auction method for belief update (continuous or discrete).
-        Defaults to continuous GRU update if None.
+        Both oracle and counterfactual-truthful terms use the SAME state s_t, so
+        the estimator is always >= 0: the oracle can always report truthfully (=> 0).
+
+        update_belief_fn: belief update method (continuous GRU or discrete Bayes).
         """
-        discount = auction.discount
-        B = auction.num_buyers
-
         if update_belief_fn is None:
             update_belief_fn = auction.get_next_belief_state_continuous
 
+        discount = auction.discount
+        B = auction.num_buyers
+
         def step(t, carry):
-            cumul, dev_states, dev_beliefs, truth_state, k = carry
+            cumul, s, bs, k = carry
+            k, k_report, k_step = jax.random.split(k, 3)
 
-            k, k_policy, k_truth = jax.random.split(k, 3)
-            dev_keys = jax.random.split(k, B)
+            # Oracle's report and resulting allocation (used for state evolution)
+            report = policy(bs, auction, k_report)
+            oracle_alloc, _ = mechanism(s, report, auction)
 
-            # Truthful step
-            truth_types = truth_state.current_type
-            truth_alloc, truth_pay = mechanism(truth_state, truth_types, auction)
-            truth_rewards = AuctionSimulator.get_rewards(
-                auction, truth_state, truth_alloc, truth_pay
-            )
-            next_truth = auction.get_next_state(truth_state, truth_types, truth_alloc, k_truth)
+            # Counterfactual truthful baseline (same state s)
+            true_types = s.current_type
+            truth_alloc, truth_pay = mechanism(s, true_types, auction)
+            truth_rewards = AuctionSimulator.get_rewards(auction, s, truth_alloc, truth_pay)
 
-            # Per-buyer deviation steps
-            dev_rewards_list = []
-            next_dev_states = []
-            next_dev_beliefs = []
+            # Per-buyer regret: U_i(oracle_i, truth_{-i}) - U_i(truth)
+            def buyer_regret(i):
+                dev_report = true_types.at[i].set(report[i])
+                dev_alloc, dev_pay = mechanism(s, dev_report, auction)
+                dev_util_i = jnp.sum(dev_alloc[i] * true_types[i]) - dev_pay[i]
+                return dev_util_i - truth_rewards[i]
 
-            for i in range(B):
-                all_reports_i = policy(dev_beliefs[i], auction, k_policy)
-                report_i = dev_states[i].current_type.at[i].set(all_reports_i[i])
+            buyer_regrets = jax.vmap(buyer_regret)(jnp.arange(B))
+            cumul = cumul + (discount ** t) * jnp.sum(buyer_regrets)
 
-                alloc_i, pay_i = mechanism(dev_states[i], report_i, auction)
-                util_i = (
-                    jnp.sum(alloc_i[i] * dev_states[i].current_type[i]) - pay_i[i]
-                )
-                dev_rewards_list.append(util_i)
+            # State evolves along the oracle's trajectory
+            next_s = auction.get_next_state(s, report, oracle_alloc, k_step)
+            next_bs = update_belief_fn(bs, report, oracle_alloc, next_s)
+            return (cumul, next_s, next_bs, k)
 
-                ns_i = auction.get_next_state(dev_states[i], report_i, alloc_i, dev_keys[i])
-                nb_i = update_belief_fn(dev_beliefs[i], report_i, alloc_i, ns_i)
-                next_dev_states.append(ns_i)
-                next_dev_beliefs.append(nb_i)
-
-            dev_rewards = jnp.stack(dev_rewards_list)
-            cumul = cumul + (discount ** t) * jnp.sum(dev_rewards - truth_rewards)
-
-            return (cumul, next_dev_states, next_dev_beliefs, next_truth, k)
-
-        init_dev_states = [state for _ in range(B)]
-        init_dev_beliefs = [belief_state for _ in range(B)]
-        init = (0.0, init_dev_states, init_dev_beliefs, state, key)
-
-        cumul, _, _, _, _ = jax.lax.fori_loop(0, auction.num_horizons, step, init)
+        init = (0.0, state, belief_state, key)
+        cumul, _, _, _ = jax.lax.fori_loop(0, auction.num_horizons, step, init)
         return cumul
 
     @staticmethod
@@ -868,9 +855,9 @@ class AuctionSimulator:
             update_belief_fn = auction.get_next_belief_state_continuous
 
         def fn(s, k):
-            b = auction.get_initial_belief_state(s)
+            bs = auction.get_initial_belief_state(s)
             return AuctionSimulator.sample_cumulative_regret(
-                auction, s, b, mechanism, policy, k, update_belief_fn
+                auction, s, bs, mechanism, policy, k, update_belief_fn
             )
 
         return jnp.mean(jax.vmap(fn)(init_states, roll_keys))
