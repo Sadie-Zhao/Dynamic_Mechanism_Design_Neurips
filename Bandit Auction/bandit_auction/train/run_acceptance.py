@@ -55,6 +55,7 @@ def nested_GD_acceptance(
     num_inner_steps: int = 400,
     lr_w: float = 1e-3,
     inner_opt_reset_each_outer: bool = True,
+    n_inner_restarts: int = 3,   # independent restarts; best regret is kept
 
     # Monte Carlo
     num_samples_train: int = 64,
