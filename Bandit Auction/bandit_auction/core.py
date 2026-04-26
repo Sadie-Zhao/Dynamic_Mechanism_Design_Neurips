@@ -270,9 +270,16 @@ class BanditAuction:
             jnp.arange(self.num_buyers), belief_state.beliefs
         )  # (B, K)
 
+        # Embed next true type in priv_embeds[:, :G] so the deviation policy
+        # can condition on the buyer's own current type (mirrors continuous case).
+        G = self.num_goods
+        new_priv = belief_state.priv_embeds.at[:, :G].set(
+            next_state.current_type.astype(jnp.float32)
+        )
+
         return belief_state.replace_state(
             t + 1, new_alloc_hist, new_report_hist,
-            belief_state.pub_embed, belief_state.priv_embeds, new_beliefs
+            belief_state.pub_embed, new_priv, new_beliefs
         )
 
     @property
@@ -533,12 +540,18 @@ def bandit_init_belief_state_discrete(
     # Uniform initial beliefs
     beliefs = jnp.ones((B, K), jnp.float32) / K
 
+    # Embed initial true type in priv_embeds[:, :G] so the deviation policy
+    # can condition on the buyer's own type (mirrors continuous case).
+    priv_embeds = jnp.zeros((B, auction.d_priv), jnp.float32).at[:, :G].set(
+        initial_state.current_type.astype(jnp.float32)
+    )
+
     return BeliefState(
         time_step=0,
         allocation_history=jnp.zeros((T, B, G), jnp.float32),
         report_history=jnp.zeros((T, B, G), jnp.float32),
         pub_embed=jnp.zeros((auction.d_pub,), jnp.float32),
-        priv_embeds=jnp.zeros((B, auction.d_priv), jnp.float32),
+        priv_embeds=priv_embeds,
         beliefs=beliefs,
     )
 
