@@ -113,45 +113,43 @@ class BanditAuction:
     """Auction configuration for bandit experiments.
 
     buyer_types is None for continuous settings; set to (B, K, G) for discrete.
-    All non-JAX fields are marked pytree_node=False.
+
+    pytree_node=False is used ONLY for non-JAX fields (ints, floats, callables).
+    All jnp.ndarray and hk.Params fields are pytree leaves (default pytree_node=True)
+    so that JAX's JIT cache comparison never calls array __eq__ on statics.
+
+    Field ordering: required fields (no default) must precede defaulted fields.
     """
+    # ---- Static required: scalars and callables (pytree_node=False) ----
     num_horizons: int = struct.field(pytree_node=False)
     num_buyers: int = struct.field(pytree_node=False)
     num_goods: int = struct.field(pytree_node=False)
-
-    # Callables
     init_state_function: Callable = struct.field(pytree_node=False)
     init_belief_state_function: Callable = struct.field(pytree_node=False)
     transition_function: Callable = struct.field(pytree_node=False)
-
     discount: float = struct.field(pytree_node=False)
-    allocation_cost: jnp.ndarray = struct.field(pytree_node=False)
-
-    # Type space
     sample_types_fn: Callable = struct.field(pytree_node=False)
-    types_low: jnp.ndarray = struct.field(pytree_node=False)
-    types_high: jnp.ndarray = struct.field(pytree_node=False)
 
-    # Optional: discrete case provides transition probs; None for continuous
+    # ---- Leaf required: JAX arrays ----
+    allocation_cost: jnp.ndarray
+    types_low: jnp.ndarray
+    types_high: jnp.ndarray
+
+    # ---- Static optional: scalars, callables, and haiku nets (pytree_node=False) ----
     get_transition_prob: Optional[Callable] = struct.field(pytree_node=False, default=None)
-
-    # Discrete only: explicit type values per buyer; None for continuous
-    buyer_types: Optional[jnp.ndarray] = struct.field(pytree_node=False, default=None)
-    # Discrete only: all joint type profiles (K^B, B, G)
-    type_profiles: Optional[jnp.ndarray] = struct.field(pytree_node=False, default=None)
     num_type_profiles: int = struct.field(pytree_node=False, default=0)
-
-    # Belief encoders (continuous only; None for discrete)
     belief_pub_net: Optional[hk.Transformed] = struct.field(pytree_node=False, default=None)
-    belief_pub_params: Optional[hk.Params] = struct.field(pytree_node=False, default=None)
     belief_priv_net: Optional[hk.Transformed] = struct.field(pytree_node=False, default=None)
-    belief_priv_params: Optional[hk.Params] = struct.field(pytree_node=False, default=None)
     d_pub: int = struct.field(pytree_node=False, default=64)
     d_priv: int = struct.field(pytree_node=False, default=128)
-
-    # Transition hyperparams (continuous logit-space Gaussian)
     trans_sigma_no: float = struct.field(pytree_node=False, default=1.0)
     trans_lambda: float = struct.field(pytree_node=False, default=1.0)
+
+    # ---- Leaf optional: JAX arrays and haiku params ----
+    buyer_types: Optional[jnp.ndarray] = None
+    type_profiles: Optional[jnp.ndarray] = None
+    belief_pub_params: Optional[hk.Params] = None
+    belief_priv_params: Optional[hk.Params] = None
 
     # ---- Helpers ----
     def get_initial_state(self, key: jax.random.PRNGKey) -> State:
