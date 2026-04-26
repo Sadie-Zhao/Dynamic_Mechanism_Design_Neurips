@@ -430,34 +430,77 @@ def build_bounded_policy_net(d_priv, d_pub, G, hidden=128,
 # Discrete policy head
 # ---------------------------------------------------------------------------
 
-class DiscreteResidualHead(hk.Module):
-    """Discrete report policy: outputs a softmax distribution over type profiles,
-    initialized to concentrate on the true type (proto = one-hot on current type).
+class DiscreteProtoResidualHead(hk.Module):
+    """Discrete report policy with truthful-prototype initialization.
+
+    logits[b, t] = k * one_hot_true_type[b, t] + residual(priv_embeds)[b, t]
+
+    - one_hot_true_type is derived from priv_embeds[:, :G] (stores current true type)
+      matched against buyer_types (B, T, G); exact float equality holds because both
+      originate from the same discrete type array.
+    - k (proto_strength) >= 0 via softplus; initialized at proto_strength_init.
+    - residual last layer is zero-init => exact truthful start when residual_init_std=0.
+    - Output: (B, G) expected report via Gumbel-softmax over T per-buyer types.
     """
-    def __init__(self, d_priv, d_pub, hidden=128, name=None):
+    def __init__(self, d_priv, d_pub, hidden=128,
+                 proto_strength_init=10.0, residual_init_std=0.0,
+                 stop_grad_truth=True, name=None):
         super().__init__(name=name)
         self.d_priv = d_priv
         self.d_pub = d_pub
         self.hidden = hidden
+        self.proto_strength_init = float(proto_strength_init)
+        self.residual_init_std = float(residual_init_std)
+        self.stop_grad_truth = stop_grad_truth
         self.trunk = hk.nets.MLP([hidden, hidden], activate_final=True)
 
     def __call__(self, belief_state: BeliefState, auction: BanditAuction,
                  key: jax.random.PRNGKey):
         B = auction.num_buyers
-        K = auction.num_type_profiles
+        G = auction.num_goods
+        # buyer_types: (B, T_per_buyer, G)
+        buyer_types = auction.buyer_types          # (B, T, G)
+        T = buyer_types.shape[1]
 
-        H = belief_state.priv_embeds   # (B, d_priv)
-        c = belief_state.pub_embed     # (d_pub,) — zeros for discrete
+        # ---- Truthful proto ----
+        # priv_embeds[:, :G] is set to current_type in every belief state update.
+        # Values come from buyer_types[b, idx, :] so float equality holds exactly.
+        H_type = belief_state.priv_embeds[:, :G]  # (B, G)
+        if self.stop_grad_truth:
+            H_type = jax.lax.stop_gradient(H_type)
 
-        # For each buyer i, the logit over K type profiles
+        # match[b, t] = 1 iff buyer b's true type equals buyer_types[b, t, :]
+        match = jnp.all(
+            H_type[:, None, :] == buyer_types,    # (B, 1, G) broadcast vs (B, T, G)
+            axis=-1,
+        ).astype(jnp.float32)                     # (B, T)
+
+        # Learnable proto strength >= 0 via softplus; init so softplus(raw) ≈ proto_strength_init
+        k_raw = hk.get_parameter(
+            "proto_strength_raw", shape=(1,),
+            init=hk.initializers.Constant(
+                float(jnp.log(jnp.expm1(jnp.array(self.proto_strength_init))))
+            ),
+        )
+        k = jax.nn.softplus(k_raw)                # scalar >= 0
+        proto_logits = k * match                  # (B, T)
+
+        # ---- Residual ----
+        H = belief_state.priv_embeds              # (B, d_priv)
+        c = belief_state.pub_embed                # (d_pub,) — zeros for discrete
+
         zero = hk.initializers.Constant(0.0)
         c_proj = hk.Linear(self.d_priv, w_init=zero, b_init=zero)(c)
         x = jnp.concatenate([H, jnp.broadcast_to(c_proj, H.shape)], axis=-1)
+        z = self.trunk(x)                         # (B, hidden)
 
-        z = self.trunk(x)                                  # (B, hidden)
-        logits = hk.Linear(K, w_init=zero, b_init=zero)(z)  # (B, K)
+        res_init = (hk.initializers.RandomNormal(self.residual_init_std)
+                    if self.residual_init_std > 0 else zero)
+        residual_logits = hk.Linear(T, w_init=res_init, b_init=zero)(z)  # (B, T)
 
-        # Straight-through Gumbel-softmax for differentiable discrete sampling
+        logits = proto_logits + residual_logits   # (B, T)
+
+        # ---- Straight-through Gumbel-softmax ----
         if key is not None:
             gumbel_noise = -jnp.log(-jnp.log(
                 jax.random.uniform(key, shape=logits.shape, minval=1e-10, maxval=1.0)
@@ -466,22 +509,24 @@ class DiscreteResidualHead(hk.Module):
         else:
             soft = jax.nn.softmax(logits, axis=-1)
 
-        # Hard one-hot (but gradient flows through soft)
-        hard_idx = jnp.argmax(soft, axis=-1)              # (B,)
-        hard = jax.nn.one_hot(hard_idx, K)                # (B, K)
-        report_probs = soft + jax.lax.stop_gradient(hard - soft)
+        hard_idx = jnp.argmax(soft, axis=-1)      # (B,)
+        hard = jax.nn.one_hot(hard_idx, T)        # (B, T)
+        report_probs = soft + jax.lax.stop_gradient(hard - soft)  # straight-through
 
-        # Expected report = sum_k p_k * type_profiles[k, i, :]
-        # type_profiles: (K, B, G) -> we need (K, B, G) indexed per buyer
-        profiles = auction.type_profiles  # (K, B, G)
-        # For buyer i: report_i = sum_k report_probs[i,k] * profiles[k, i, :]
-        report = jnp.einsum('bk,kbg->bg', report_probs, profiles)  # (B, G)
+        # Expected report: sum_t p_t * buyer_types[b, t, :]
+        report = jnp.einsum('bt,btg->bg', report_probs, buyer_types)  # (B, G)
         return report
 
 
-def build_discrete_policy_net(d_priv, d_pub, hidden=128) -> hk.Transformed:
+def build_discrete_policy_net(d_priv, d_pub, hidden=128,
+                               proto_strength_init=10.0,
+                               residual_init_std=0.0,
+                               stop_grad_truth=True) -> hk.Transformed:
     def f(belief_state, auction, key=None):
-        return DiscreteResidualHead(d_priv, d_pub, hidden)(belief_state, auction, key)
+        return DiscreteProtoResidualHead(
+            d_priv, d_pub, hidden,
+            proto_strength_init, residual_init_std, stop_grad_truth,
+        )(belief_state, auction, key)
     return hk.without_apply_rng(hk.transform(f))
 
 
