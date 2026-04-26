@@ -761,7 +761,7 @@ class AuctionSimulator:
             report = s.current_type
             alloc, pay = mechanism(s, report, auction)
             profit = AuctionSimulator.get_profit(auction, s, alloc, pay)
-            cumul = cumul + (discount ** t) * profit
+            cumul = cumul + jnp.power(discount, t) * profit
             s_next = auction.get_next_state(s, report, alloc, k_next)
             return (cumul, s_next, k)
 
@@ -796,7 +796,7 @@ class AuctionSimulator:
             report = s.current_type
             alloc, pay = mechanism(s, report, auction)
             rewards = AuctionSimulator.get_rewards(auction, s, alloc, pay)
-            cumul = cumul + (discount ** t) * rewards
+            cumul = cumul + jnp.power(discount, t) * rewards
             s_next = auction.get_next_state(s, report, alloc, k_next)
             return (cumul, s_next, k)
 
@@ -901,7 +901,7 @@ class AuctionSimulator:
                 next_dev_beliefs.append(nb_i)
 
             dev_rewards = jnp.stack(dev_rewards_list)
-            cumul = cumul + (discount ** t) * jnp.sum(dev_rewards - truth_rewards)
+            cumul = cumul + jnp.power(discount, t) * jnp.sum(dev_rewards - truth_rewards)
 
             return (cumul, next_dev_states, next_dev_beliefs, next_truth, k)
 
