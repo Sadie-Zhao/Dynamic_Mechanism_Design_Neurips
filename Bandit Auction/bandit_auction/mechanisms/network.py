@@ -64,8 +64,12 @@ def mechanism_network(
     T = auction.num_horizons
 
     # Time step scalar, broadcast to (B, 1)
-    # jnp.full handles traced values; jnp.array([[...]]) would call float() on the tracer
-    t_norm = jnp.full((B, 1), state.time_step / max(T - 1, 1), dtype=jnp.float32)
+    # Use precomputed lookup to avoid any Python-level operation on the abstract time_step
+    # tracer. Direct arithmetic on abstract ints (e.g. t/4.0) can cause float() errors
+    # in some JAX versions when the result flows into lax primitives that do concrete checks.
+    _t_table = jnp.arange(T + 1, dtype=jnp.float32) / jnp.float32(max(T - 1, 1))
+    t_scalar = _t_table[state.time_step]          # dynamic gather: abstract float32 scalar
+    t_norm = jnp.ones((B, 1), jnp.float32) * t_scalar  # broadcast via multiply
 
     # Stream 1: current report + time step (B, G+1) -> (B, 64)
     report_in = jnp.concatenate(

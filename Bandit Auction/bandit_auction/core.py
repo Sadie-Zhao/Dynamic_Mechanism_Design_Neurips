@@ -178,9 +178,9 @@ class BanditAuction:
 
     # ---- Public observation token (continuous) ----
     def encode_obs_pub(self, t: int, allocation_t: jnp.ndarray) -> jnp.ndarray:
-        t_norm = jnp.reshape(
-            jnp.asarray(t, jnp.float32) / max(1, self.num_horizons - 1), (1,)
-        )
+        T = self.num_horizons
+        _t_table = jnp.arange(T + 1, dtype=jnp.float32) / jnp.float32(max(T - 1, 1))
+        t_norm = jnp.reshape(_t_table[t], (1,))
         return jnp.concatenate([t_norm, allocation_t.reshape(-1).astype(jnp.float32)], axis=0)
 
     # ---- Private observation token (continuous) ----
@@ -190,9 +190,9 @@ class BanditAuction:
         type_i_next: jnp.ndarray,
         report_it: jnp.ndarray,
     ) -> jnp.ndarray:
-        t_norm = jnp.reshape(
-            jnp.asarray(t, jnp.float32) / max(1, self.num_horizons - 1), (1,)
-        )
+        T = self.num_horizons
+        _t_table = jnp.arange(T + 1, dtype=jnp.float32) / jnp.float32(max(T - 1, 1))
+        t_norm = jnp.reshape(_t_table[t], (1,))
         return jnp.concatenate([
             t_norm,
             type_i_next.reshape(-1).astype(jnp.float32),
