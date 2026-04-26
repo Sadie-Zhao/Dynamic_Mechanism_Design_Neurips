@@ -64,10 +64,8 @@ def mechanism_network(
     T = auction.num_horizons
 
     # Time step scalar, broadcast to (B, 1)
-    t_norm = jnp.broadcast_to(
-        jnp.array([[state.time_step / max(T - 1, 1)]], dtype=jnp.float32),
-        (B, 1),
-    )
+    # jnp.full handles traced values; jnp.array([[...]]) would call float() on the tracer
+    t_norm = jnp.full((B, 1), state.time_step / max(T - 1, 1), dtype=jnp.float32)
 
     # Stream 1: current report + time step (B, G+1) -> (B, 64)
     report_in = jnp.concatenate(
