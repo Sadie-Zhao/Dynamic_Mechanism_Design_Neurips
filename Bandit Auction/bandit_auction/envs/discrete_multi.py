@@ -20,7 +20,7 @@ def create_discrete_multi_auction(
     type_values_per_good: list = None,  # e.g. [1.0, 2.0, 3.0] repeated per good
     allocation_cost: float = 0.1,
     d_pub: int = 1,
-    d_priv: int = 1,
+    d_priv: int = None,   # defaults to n_goods; must be >= n_goods for priv_embeds type storage
     seed: int = SEED,
 ) -> BanditAuction:
     """
@@ -28,6 +28,8 @@ def create_discrete_multi_auction(
     type_values_per_good: list of values for each good (same values for both goods by default).
     All combinations across goods form the per-buyer type set.
     """
+    if d_priv is None:
+        d_priv = n_goods
     if type_values_per_good is None:
         type_values_per_good = [1.0, 2.0, 3.0]
 

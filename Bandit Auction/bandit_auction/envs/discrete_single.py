@@ -40,10 +40,12 @@ def create_discrete_single_auction(
     discount: float = 0.9,
     type_values: list = None,  # e.g. [1.0, 2.0, 3.0]
     allocation_cost: float = 0.1,
-    d_pub: int = 1,    # unused in discrete (dummy); kept for BeliefState shape
-    d_priv: int = 1,   # unused in discrete (dummy)
+    d_pub: int = 1,    # kept for BeliefState shape
+    d_priv: int = None,  # defaults to n_goods; must be >= n_goods for priv_embeds type storage
     seed: int = SEED,
 ) -> BanditAuction:
+    if d_priv is None:
+        d_priv = n_goods
     if type_values is None:
         type_values = [1.0, 2.0, 3.0]
 
