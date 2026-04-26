@@ -55,6 +55,7 @@ def nested_GD_penalty(
     num_inner_steps: int = 400,
     lr_w: float = 1e-3,
     inner_opt_reset_each_outer: bool = True,
+    n_inner_restarts: int = 3,   # independent restarts; best regret is kept
 
     # Monte Carlo
     num_samples_train: int = 64,
@@ -153,12 +154,24 @@ def nested_GD_penalty(
         return reg, policy_params, w_opt_state
 
     def maximize_regret_oracle(mechanism_params, policy_params, w_opt_state, steps):
-        reg_last = 0.0
-        for _ in range(steps):
-            reg_last, policy_params, w_opt_state = inner_step(
-                mechanism_params, policy_params, w_opt_state, next(prng)
-            )
-        return reg_last, policy_params, w_opt_state
+        steps_per = max(1, steps // n_inner_restarts)
+        best_reg = -float("inf")
+        best_pp, best_ws = policy_params, w_opt_state
+        for restart_idx in range(n_inner_restarts):
+            if restart_idx > 0:
+                _init_s = auction.get_initial_state(next(prng))
+                _init_b = auction.get_initial_belief_state(_init_s)
+                policy_params = policy_network.init(next(prng), _init_b, auction)
+                w_opt_state = w_opt.init(policy_params)
+            reg_last = 0.0
+            for _ in range(steps_per):
+                reg_last, policy_params, w_opt_state = inner_step(
+                    mechanism_params, policy_params, w_opt_state, next(prng)
+                )
+            if float(reg_last) > best_reg:
+                best_reg = float(reg_last)
+                best_pp, best_ws = policy_params, w_opt_state
+        return best_reg, best_pp, best_ws
 
     # ---- Outer: update theta ----
     # Direct penalty: L = -Profit + alpha*[Regret]+ + beta*IR
@@ -325,6 +338,7 @@ def main():
         print_iter=cfg.get("print_iter", 50),
         checkpoint_thresh=cfg.get("checkpoint_thresh", None),
         checkpoint_interval=cfg.get("checkpoint_interval", 50),
+        n_inner_restarts=cfg.get("n_inner_restarts", 3),
         is_discrete=is_discrete,
         seed=seed,
     )

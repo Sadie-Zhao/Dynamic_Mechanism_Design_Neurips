@@ -54,6 +54,7 @@ DEFAULT_BS_CFG = dict(
     num_inner_steps  = 400,
     num_outer_epochs = 2000,
     num_samples_train = 64,
+    n_inner_restarts = 3,
 
     checkpoint_thresh   = 0.15,
     checkpoint_interval = 50,
@@ -113,6 +114,7 @@ def train_with_checkpoints(
         print_iter          = cfg.get("print_iter", 100),
         checkpoint_thresh   = cfg["checkpoint_thresh"],
         checkpoint_interval = cfg["checkpoint_interval"],
+        n_inner_restarts    = cfg.get("n_inner_restarts", 3),
         is_discrete         = is_discrete,
         seed                = seed,
     )

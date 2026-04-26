@@ -151,12 +151,24 @@ def nested_GD_acceptance(
         return reg, policy_params, w_opt_state
 
     def maximize_regret_oracle(mechanism_params, policy_params, w_opt_state, steps):
-        reg_last = 0.0
-        for _ in range(steps):
-            reg_last, policy_params, w_opt_state = inner_step(
-                mechanism_params, policy_params, w_opt_state, next(prng)
-            )
-        return reg_last, policy_params, w_opt_state
+        steps_per = max(1, steps // n_inner_restarts)
+        best_reg = -float("inf")
+        best_pp, best_ws = policy_params, w_opt_state
+        for restart_idx in range(n_inner_restarts):
+            if restart_idx > 0:
+                _init_s = auction.get_initial_state(next(prng))
+                _init_b = auction.get_initial_belief_state(_init_s)
+                policy_params = policy_network.init(next(prng), _init_b, auction)
+                w_opt_state = w_opt.init(policy_params)
+            reg_last = 0.0
+            for _ in range(steps_per):
+                reg_last, policy_params, w_opt_state = inner_step(
+                    mechanism_params, policy_params, w_opt_state, next(prng)
+                )
+            if float(reg_last) > best_reg:
+                best_reg = float(reg_last)
+                best_pp, best_ws = policy_params, w_opt_state
+        return best_reg, best_pp, best_ws
 
     # ---- Outer: update theta ----
 
