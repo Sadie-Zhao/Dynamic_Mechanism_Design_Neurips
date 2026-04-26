@@ -3,11 +3,16 @@ mechanisms/network.py — Mechanism network architecture and Mechanism wrapper.
 
 Shared across all four bandit auction experiment variants.
 Architecture:
-  - 4 input streams: current_type (64) | current_report (64) | alloc_history_sum (48)
-                     | report_history_attn (32)
+  - 3 input streams: current_report (64) | alloc_history_sum (48) | report_history_attn (32)
+  - Time step scalar broadcast to (B, 1) and prepended to report features
   - Shared MLP trunk -> (128 -> 64)
-  - Allocation head: per-good softmax over (n+1) options (mean-pooled for equivariance)
+  - Allocation head: per-buyer score (B,) + shared null score -> (B+1,) softmax per good
+    (equivariant: permuting buyers permutes allocation probabilities accordingly)
   - Payment head: MLP -> scalar per buyer (relu for non-negativity)
+
+The mechanism intentionally does NOT receive state.current_type (true private types).
+Only public information (allocation history, report history) and the submitted reports
+are used, so that IC is a non-trivial constraint and report deviations affect outcomes.
 """
 
 import jax
@@ -58,43 +63,44 @@ def mechanism_network(
     G = auction.num_goods
     T = auction.num_horizons
 
-    # Stream 1: current type (B, G) -> (B, 64)
-    type_feat = hk.nets.MLP([128, 64], activate_final=True)(
-        state.current_type.reshape(B, -1).astype(jnp.float32)
+    # Time step scalar, broadcast to (B, 1)
+    t_norm = jnp.broadcast_to(
+        jnp.array([[state.time_step / max(T - 1, 1)]], dtype=jnp.float32),
+        (B, 1),
     )
 
-    # Stream 2: current report (B, G) -> (B, 64)
-    report_feat = hk.nets.MLP([128, 64], activate_final=True)(
-        report.reshape(B, -1).astype(jnp.float32)
+    # Stream 1: current report + time step (B, G+1) -> (B, 64)
+    report_in = jnp.concatenate(
+        [report.reshape(B, -1).astype(jnp.float32), t_norm], axis=-1
     )
+    report_feat = hk.nets.MLP([128, 64], activate_final=True)(report_in)
 
-    # Stream 3: cumulative allocation history sum (B, G) -> (B, 48)
+    # Stream 2: cumulative allocation history sum (B, G) -> (B, 48)
     alloc_sum = jnp.sum(state.allocation_history, axis=0).astype(jnp.float32)  # (B, G)
     alloc_feat = hk.nets.MLP([96, 48], activate_final=True)(
         alloc_sum.reshape(B, -1)
     )
 
-    # Stream 4: report history via attention pooling (T, B, G) -> (B, 32)
+    # Stream 3: report history via attention pooling (T, B, G) -> (B, 32)
     rep_hist = state.report_history.astype(jnp.float32)  # (T, B, G)
     rep_hist_feat = _attention_pool(rep_hist, out_dim=32)  # (B, 32)
 
-    # Concatenate all streams -> (B, 208)
-    h = jnp.concatenate([type_feat, report_feat, alloc_feat, rep_hist_feat], axis=-1)
+    # Concatenate all streams -> (B, 144)
+    h = jnp.concatenate([report_feat, alloc_feat, rep_hist_feat], axis=-1)
 
     # Shared trunk -> (B, 64)
     h = hk.nets.MLP([128, 64], activate_final=True)(h)
 
-    # ---- Allocation head ----
-    # For each good g, linear -> (B+1,), then mean-pool across buyers, then softmax
-    alloc_logits_per_good = []
-    for g in range(G):
-        # Independent head per good; share h across buyers
-        logits_g = hk.Linear(B + 1)(h)           # (B, B+1)
-        logits_g_mean = jnp.mean(logits_g, axis=0)  # (B+1,) mean-pooled for equivariance
-        alloc_logits_per_good.append(logits_g_mean)
-
-    alloc_logits = jnp.stack(alloc_logits_per_good, axis=1)  # (B+1, G)
-    alloc_probs_with_null = jax.nn.softmax(alloc_logits, axis=0)  # softmax over buyers dim
+    # ---- Allocation head (equivariant) ----
+    # Per-buyer score for each good: (B, G)
+    buyer_scores = hk.Linear(G)(h)   # (B, G)
+    # Shared null score per good: (1, G)
+    null_score = hk.get_parameter(
+        "null_score", shape=(1, G), init=hk.initializers.Constant(0.0)
+    )
+    # Stack -> (B+1, G), then softmax over buyer dimension
+    alloc_logits = jnp.concatenate([buyer_scores, null_score], axis=0)  # (B+1, G)
+    alloc_probs_with_null = jax.nn.softmax(alloc_logits, axis=0)  # (B+1, G)
 
     # ---- Payment head ----
     payment = hk.nets.MLP([64, 32, 1], activate_final=False)(h).squeeze(-1)  # (B,)
