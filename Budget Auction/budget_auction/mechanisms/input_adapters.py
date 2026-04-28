@@ -335,13 +335,77 @@ def mechanism_network_A_wide(
 
 
 # ---------------------------------------------------------------------------
+# Variant A_plus: A + informationally redundant sum-payment feature
+# ---------------------------------------------------------------------------
+
+def mechanism_network_A_plus(
+    state: BudgetState,
+    report: jnp.ndarray,       # (B, G)
+    auction: BudgetAuction,
+):
+    """
+    Variant A with one additional input: total cumulative payments sum_tau p_{i,tau},
+    computed as (B_i - beta_i).  This is informationally IDENTICAL to beta_i (already
+    in A's inputs) since sum_tau p = B_i - beta_i is a deterministic linear function
+    of beta_i and the constant B_i.
+
+    Purpose: if A_plus > A in revenue, it proves that explicit representation of a
+    redundant feature changes the gradient landscape even with zero added information —
+    direct positive evidence for the "representational optimization gap" hypothesis.
+
+    The extra feature is encoded with the same MLP structure Variant B uses for its
+    aggregated payment history stream, allowing a like-for-like comparison.
+    """
+    B, G = auction.num_buyers, auction.num_goods
+    t_norm = jnp.array(
+        [state.time_step / max(1, auction.num_horizons - 1)], dtype=jnp.float32
+    )
+
+    # Encode current report (B, G) -> (B, 64)
+    h_report = hk.Sequential([
+        hk.Linear(128), jax.nn.relu,
+        hk.Linear(64),
+    ])(report.reshape(B, G))                                           # (B, 64)
+
+    # Per-buyer GBAM features: [alpha_i/B_i, beta_i/B_i, t/T] -> (B, 32)
+    alpha_norm = (state.alpha / auction.initial_budgets).reshape(B, 1)
+    beta_norm  = (state.beta  / auction.initial_budgets).reshape(B, 1)
+    t_feat     = jnp.broadcast_to(t_norm, (B, 1))
+    h_state = hk.Sequential([
+        hk.Linear(64), jax.nn.relu,
+        hk.Linear(32),
+    ])(jnp.concatenate([alpha_norm, beta_norm, t_feat], axis=-1))     # (B, 32)
+
+    # Redundant feature: sum_tau p_{i,tau} / B_i = (B_i - beta_i) / B_i
+    # Informationally equivalent to beta_norm but exposes cumulative payments directly.
+    sum_pay_norm = (
+        (auction.initial_budgets - state.beta) / auction.initial_budgets
+    ).reshape(B, 1)                                                    # (B, 1)
+    h_pay = hk.Sequential([
+        hk.Linear(32), jax.nn.relu,
+        hk.Linear(16),
+    ])(sum_pay_norm)                                                   # (B, 16)
+
+    h = jnp.concatenate([h_report, h_state, h_pay], axis=-1)         # (B, 112)
+    h = hk.Sequential([
+        hk.Linear(128), jax.nn.relu,
+        hk.Linear(64), jax.nn.relu,
+    ])(h)                                                              # (B, 64)
+
+    alloc_probs = _alloc_head(h, B, G)
+    z = _payment_head(h)
+    return alloc_probs, z
+
+
+# ---------------------------------------------------------------------------
 # Variant registry
 # ---------------------------------------------------------------------------
 
 VARIANT_NETWORK = {
-    "A":       mechanism_network_A,
-    "B":       mechanism_network_B,
-    "C":       mechanism_network_C,
-    "A_cheat": mechanism_network_A_cheat,
-    "A_wide":  mechanism_network_A_wide,
+    "A":        mechanism_network_A,
+    "B":        mechanism_network_B,
+    "C":        mechanism_network_C,
+    "A_cheat":  mechanism_network_A_cheat,
+    "A_wide":   mechanism_network_A_wide,
+    "A_plus":   mechanism_network_A_plus,
 }
