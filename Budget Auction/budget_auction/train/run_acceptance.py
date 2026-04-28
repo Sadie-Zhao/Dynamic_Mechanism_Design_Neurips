@@ -272,7 +272,7 @@ def main():
     parser = argparse.ArgumentParser(description="Budget Auction Nested-GD Training")
     parser.add_argument("--config", required=True, help="Path to YAML config file")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--variant", choices=["A", "B", "C"], default=None,
+    parser.add_argument("--variant", choices=list(VARIANT_NETWORK.keys()), default=None,
                         help="Mechanism input variant (overrides config)")
     parser.add_argument("--output_dir", default=None,
                         help="Output directory (overrides config)")
