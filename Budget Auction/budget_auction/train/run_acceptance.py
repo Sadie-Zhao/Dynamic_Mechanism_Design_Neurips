@@ -81,6 +81,10 @@ def nested_GD_budget(
     checkpoint_thresh: float = None,
     checkpoint_interval: int = 50,
 
+    # Warm start: if provided, skip random init and use these params instead.
+    # Useful for A_distilled warm-start fine-tuning.
+    init_mechanism_params=None,
+
     seed: int = SEED,
 ) -> Dict:
     """
@@ -98,12 +102,16 @@ def nested_GD_budget(
 
     # ---- Init mechanism params ----
     init_state = auction.get_initial_state(next(prng))
-    mechanism_params = mechanism_network.init(
-        next(prng),
-        init_state,
-        jnp.zeros((auction.num_buyers, auction.num_goods)),
-        auction,
-    )
+    if init_mechanism_params is not None:
+        mechanism_params = init_mechanism_params
+        next(prng)  # consume key to keep PRNGSequence aligned
+    else:
+        mechanism_params = mechanism_network.init(
+            next(prng),
+            init_state,
+            jnp.zeros((auction.num_buyers, auction.num_goods)),
+            auction,
+        )
 
     # ---- Init policy params ----
     init_belief = auction.get_initial_belief_state(init_state)
