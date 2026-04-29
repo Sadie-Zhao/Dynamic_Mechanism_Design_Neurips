@@ -25,9 +25,22 @@ Simplified implementation:
 
 Usage:
     from bandit_auction.baselines.pavan import (
-        eval_myerson_mechanism, eval_pavan_mechanism,
+        eval_myerson_mechanism,
+        eval_pavan_mechanism,
+        eval_pavan_bandit_auction,
     )
     revenue, surplus = eval_myerson_mechanism(auction, num_samples=512, seed=0)
+    revenue, surplus = eval_pavan_bandit_auction(auction, num_samples=500, seed=0)
+
+NOTE on eval_pavan_mechanism vs eval_pavan_bandit_auction:
+  eval_pavan_mechanism: general GVV-with-IR approach (Theorem 2), evaluates hazard
+    rate at the CURRENT type -- correct for general dynamic mechanisms but
+    conceptually wrong for bandit auctions where IR=1 and the IC rent is
+    determined by the INITIAL type's hazard rate.
+  eval_pavan_bandit_auction: bandit auction-specific implementation of Eq. (15).
+    Computes inv_hazard at the initial type theta_i0 (fixed for the episode) and
+    uses the Gittins stopping-time index. This is the correct benchmark for the
+    bandit auction setting (PST 2014, Section 5, Proposition 2).
 """
 
 from typing import Optional, Tuple
@@ -397,6 +410,160 @@ def eval_pavan_mechanism(
 
         total_revenue += ep_revenue
         total_surplus += ep_surplus
+
+    return total_revenue / num_samples, total_surplus / num_samples
+
+
+# ---------------------------------------------------------------------------
+# Correct bandit auction benchmark: Gittins index (PST 2014, Eq. 15)
+# ---------------------------------------------------------------------------
+
+def _gittins_index(
+    auction,
+    state,
+    buyer_i: int,
+    inv_hz_i: float,
+    c_i: float,
+    num_index_samples: int,
+    key: jax.random.PRNGKey,
+) -> float:
+    """Gittins stopping-time index for buyer i (PST 2014, Eq. 15).
+
+    gamma_i = max_{T >= t}
+        E[ sum_{tau=t}^{T} delta^{tau-t} * (theta_{i,tau} - c_i - inv_hz_i) | theta_{it}, always allocated ]
+        / sum_{tau=t}^{T} delta^{tau-t}
+
+    Flow payoff = theta - c_i - inv_hz_i, with BOTH cost and initial hazard inside numerator.
+    """
+    t = int(state.time_step)
+    T = auction.num_horizons
+    gamma = float(auction.discount)
+    B = auction.num_buyers
+    sample_keys = jax.random.split(key, num_index_samples)
+
+    # Simulate num_index_samples paths always allocating to buyer i
+    all_paths = []
+    for sk in sample_keys:
+        sim = state
+        path = []
+        for s in range(t, T):
+            sk, step_key = jax.random.split(sk)
+            path.append(float(sim.current_type[buyer_i, 0]))
+            alloc = jnp.zeros((B, auction.num_goods)).at[buyer_i, 0].set(1.0)
+            sim = auction.get_next_state(sim, sim.current_type, alloc, step_key)
+        all_paths.append(path)
+
+    best_ratio = float('-inf')
+    for tau_stop in range(t, T):
+        length = tau_stop - t + 1
+        ratios = []
+        for path in all_paths:
+            num = sum(gamma**s * (path[s] - c_i - inv_hz_i) for s in range(length))
+            den = sum(gamma**s for s in range(length))
+            ratios.append(num / den)
+        mean_ratio = float(np.mean(ratios))
+        if mean_ratio > best_ratio:
+            best_ratio = mean_ratio
+    return best_ratio
+
+
+def eval_pavan_bandit_auction(
+    auction,
+    num_samples: int = 500,
+    num_index_samples: int = 50,
+    seed: int = 0,
+    mean: Optional[float] = None,
+    std: Optional[float] = None,
+) -> Tuple[float, float]:
+    """Bandit auction benchmark: Gittins index policy (PST 2014, Section 5, Eq. 15).
+
+    Correct for the bandit auction setting where impulse responses are all 1:
+    - inv_hazard_i = (1-F_0(theta_i0))/f_0(theta_i0) computed at the INITIAL type,
+      fixed for the entire episode.
+    - Virtual index = Gittins stopping-time formula with flow payoff
+      (theta_{it} - c_i - inv_hazard_i), both cost and hazard inside numerator.
+    - Revenue = E[sum_t delta^t sum_i (theta_it - inv_hazard_i - c_i) * x_it].
+    - Allocation: argmax_i gamma_i if max >= 0 (seller's index = 0).
+
+    Args:
+        auction:            BanditAuction (cont_single, G=1)
+        num_samples:        Monte Carlo trajectories for revenue estimation
+        num_index_samples:  MC rollouts per Gittins index evaluation
+        seed:               RNG seed
+        mean:               F_0 mean (inferred from auction if None)
+        std:                F_0 std  (inferred from auction if None)
+
+    Returns:
+        (revenue, buyer_surplus)
+    """
+    if mean is None:
+        mean = float((auction.types_low[0, 0] + auction.types_high[0, 0]) / 2.0)
+    if std is None:
+        std = float((auction.types_high[0, 0] - auction.types_low[0, 0]) / 6.0)
+
+    B = auction.num_buyers
+    G = auction.num_goods
+    T = auction.num_horizons
+    gamma = float(auction.discount)
+
+    key = jax.random.PRNGKey(seed)
+    total_revenue = 0.0
+    total_surplus = 0.0
+
+    for ep in range(num_samples):
+        key, ep_key = jax.random.split(key)
+        state = auction.get_initial_state(ep_key)
+
+        # Compute inverse hazard rates from INITIAL types — fixed for this episode.
+        inv_hazard = []
+        for i in range(B):
+            v0 = float(state.current_type[i, 0])
+            F0 = float(_normal_cdf_approx(jnp.array(v0), mean, std))
+            f0 = max(float(_normal_pdf(jnp.array(v0), mean, std)), 1e-12)
+            inv_hazard.append((1.0 - F0) / f0)
+
+        ep_revenue = 0.0
+        ep_surplus = 0.0
+
+        for t in range(T):
+            # Compute Gittins index for each buyer
+            key, idx_key = jax.random.split(key)
+            idx_keys = jax.random.split(idx_key, B)
+
+            indices = jnp.array([
+                _gittins_index(
+                    auction, state, i,
+                    inv_hazard[i], float(auction.allocation_cost[i, 0]),
+                    num_index_samples, idx_keys[i],
+                )
+                for i in range(B)
+            ])
+
+            best_i = int(jnp.argmax(indices))
+            alloc_2d = jnp.zeros((B, G))
+            if float(indices[best_i]) >= 0.0:
+                alloc_2d = alloc_2d.at[best_i, 0].set(1.0)
+
+            types_t = state.current_type[:, 0]
+            inv_hz_arr = jnp.array(inv_hazard)
+            costs = auction.allocation_cost[:, 0]
+            virtual_surplus = float(
+                jnp.sum((types_t - inv_hz_arr - costs) * alloc_2d[:, 0])
+            )
+            ep_revenue += gamma**t * virtual_surplus
+            ep_surplus += gamma**t * float(jnp.sum(types_t * alloc_2d[:, 0]))
+
+            key, trans_key = jax.random.split(key)
+            state = auction.get_next_state(
+                state, state.current_type, alloc_2d, trans_key
+            )
+
+        total_revenue += ep_revenue
+        total_surplus += ep_surplus
+
+        if (ep + 1) % 200 == 0:
+            print(f'  [{ep+1}/{num_samples}] mean rev so far: '
+                  f'{total_revenue / (ep + 1):.4f}')
 
     return total_revenue / num_samples, total_surplus / num_samples
 
