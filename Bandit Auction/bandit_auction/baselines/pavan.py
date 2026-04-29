@@ -551,7 +551,8 @@ def eval_pavan_bandit_auction(
                 jnp.sum((types_t - inv_hz_arr - costs) * alloc_2d[:, 0])
             )
             ep_revenue += gamma**t * virtual_surplus
-            ep_surplus += gamma**t * float(jnp.sum(types_t * alloc_2d[:, 0]))
+            # Buyer surplus = IC rent = inv_hz * x (PST envelope theorem)
+            ep_surplus += gamma**t * float(jnp.sum(inv_hz_arr * alloc_2d[:, 0]))
 
             key, trans_key = jax.random.split(key)
             state = auction.get_next_state(
