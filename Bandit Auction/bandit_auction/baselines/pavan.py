@@ -233,26 +233,21 @@ def _estimate_impulse_response(
     key = jax.random.PRNGKey(seed)
 
     def rollout_from(v_start, key):
-        v = v_start
+        # Roll type from t to s assuming always allocated (IRF conditioned on allocation).
+        # Uses the allocated sigma = 1 / (lambda * (1 + alpha)) where alpha accumulates.
+        v   = v_start
         low  = float(auction.types_low[0, 0])
         high = float(auction.types_high[0, 0])
-        alloc_cost = float(auction.allocation_cost[0, 0])
+        lam  = getattr(auction, 'trans_lambda', 1.0)
         for step in range(t, s):
-            # Simple myerson allocation as proxy
-            vv = myerson_virtual_value(jnp.array(v), mean, std, low, high)
-            got_alloc = float(vv >= 0.0 and vv > alloc_cost)
-            # Logit-space Gaussian transition (simplified: sigma_no only)
-            sigma = auction.trans_sigma_no
+            alpha = 0.5 * (step - t)          # past allocations since t
+            sigma = 1.0 / (lam * (1.0 + alpha))
             key, sk = jax.random.split(key)
             noise = float(jax.random.normal(sk))
-            lo, hi = 0.01, 0.99
-            v_clip = max(lo, min(hi, (v - float(auction.types_low[0,0])) /
-                                 (float(auction.types_high[0,0]) - float(auction.types_low[0,0]))))
-            s_t = float(jnp.log(v_clip / (1 - v_clip)))
+            v_clip = max(1e-6, min(1 - 1e-6, (v - low) / (high - low)))
+            s_t    = float(jnp.log(v_clip / (1 - v_clip)))
             s_next = s_t + sigma * noise
-            v = float(auction.types_low[0,0]) + (
-                float(auction.types_high[0,0]) - float(auction.types_low[0,0])
-            ) * float(jax.nn.sigmoid(jnp.array(s_next)))
+            v = low + (high - low) * float(jax.nn.sigmoid(jnp.array(s_next)))
         return v
 
     total_diff = 0.0
