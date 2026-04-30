@@ -335,6 +335,7 @@ def eval_pavan_mechanism(
     Returns:
         (revenue, buyer_surplus)
     """
+    print("[eval_pavan_mechanism v2] revenue via PST Theorem 2 identity — no payment inversion")
     if mean is None:
         mean = float((auction.types_low[0, 0] + auction.types_high[0, 0]) / 2.0)
     if std is None:
