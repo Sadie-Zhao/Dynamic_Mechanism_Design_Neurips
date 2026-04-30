@@ -263,11 +263,13 @@ def _estimate_impulse_response(
             v = low + (high - low) * float(jax.nn.sigmoid(jnp.array(s_next)))
         return v
 
+    # Coupled (antithetic) finite differences: same noise for +δ and −δ paths.
+    # The noise cancels in the difference, leaving only the systematic IRF signal.
     total_diff = 0.0
     for r in range(num_rollouts):
-        key, sk1, sk2 = jax.random.split(key, 3)
-        v_hi = rollout_from(v_it + delta, sk1)
-        v_lo = rollout_from(v_it - delta, sk2)
+        key, sk = jax.random.split(key)
+        v_hi = rollout_from(v_it + delta, sk)
+        v_lo = rollout_from(v_it - delta, sk)
         total_diff += (v_hi - v_lo) / (2 * delta)
     return total_diff / num_rollouts
 
@@ -316,10 +318,19 @@ def eval_pavan_mechanism(
     mean: Optional[float] = None,
     std: Optional[float] = None,
 ) -> Tuple[float, float]:
-    """Evaluate the full Pavan et al. (2014) dynamic mechanism.
+    """Evaluate the PST 2014 dynamic mechanism via the revenue identity.
 
-    Precomputes impulse responses for all (t, s) pairs, then simulates the
-    mechanism using pavan_virtual_value at each step.
+    By PST Theorem 2, the seller's expected profit for any IC mechanism equals:
+        E[Σ_t δ^t Σ_i (J_i(θ_it, t) - c_i) x_it]
+    where J_i is the generalized virtual value. This is used directly — no
+    payment computation is required or attempted.
+
+    Impulse responses I_{i,t,s} = E[∂v_s/∂v_t | always allocated] are estimated
+    numerically via coupled finite differences at the mean type.
+
+    Buyer surplus follows from:
+        surplus_i = (θ_i - J_i(θ_i, t)) x_i  per period
+    because by IC, payment_i = J_i(θ_i, t) x_i  (information rent absorbed).
 
     Returns:
         (revenue, buyer_surplus)
@@ -337,7 +348,7 @@ def eval_pavan_mechanism(
     B         = auction.num_buyers
     G         = auction.num_goods
 
-    # Precompute impulse responses at the mean type
+    # Precompute impulse responses at the mean type (coupled finite differences)
     v_ref = mean
     impulse_responses = {}
     for t in range(T):
@@ -362,7 +373,7 @@ def eval_pavan_mechanism(
         for t in range(T):
             types_t = state.current_type[:, 0]  # (B,)
 
-            # Compute Pavan virtual values
+            # Generalized virtual values J_i(θ_it, t)
             pvv = jnp.array([
                 pavan_virtual_value(
                     types_t[i], t, T, gamma, mean, std, low, high,
@@ -371,34 +382,20 @@ def eval_pavan_mechanism(
                 for i in range(B)
             ])
 
-            winner_pvv = jnp.max(pvv)
-            winner_idx = int(jnp.argmax(pvv))
-            allocate = bool(winner_pvv >= 0.0 and winner_pvv > alloc_cost)
+            # Allocate to buyer with highest net virtual value J_i - c_i, if positive
+            pvv_net = pvv - alloc_cost  # J_i^* = J_i - c for each buyer
+            winner_idx = int(jnp.argmax(pvv_net))
+            allocate = float(pvv_net[winner_idx]) >= 0.0
 
             alloc = np.zeros(B)
             if allocate:
                 alloc[winner_idx] = 1.0
             alloc_j = jnp.array(alloc)
 
-            # Threshold payment
-            sorted_pvv = jnp.sort(pvv)[::-1]
-            threshold_pvv = float(jnp.maximum(sorted_pvv[1] if B > 1 else 0.0, 0.0))
-            # Approximate threshold type from Myerson inversion
-            F_th = _normal_cdf_approx(jnp.array(threshold_pvv), mean, std)
-            f_th = jnp.maximum(_normal_pdf(jnp.array(threshold_pvv), mean, std), 1e-8)
-            threshold_v = float(threshold_pvv + (1.0 - F_th) / f_th)
-            threshold_v = np.clip(threshold_v, low, high)
-
-            pay = np.zeros(B)
-            if allocate:
-                pay[winner_idx] = threshold_v
-            pay_j = jnp.array(pay)
-
-            reward = types_t * alloc_j - pay_j
-            profit = float(jnp.sum(pay_j)) - alloc_cost * float(jnp.sum(alloc_j))
-
-            ep_revenue += gamma**t * profit
-            ep_surplus += gamma**t * float(jnp.sum(reward))
+            # Revenue = Σ_i J_i^* x_i  (PST Theorem 2 revenue identity)
+            ep_revenue += gamma**t * float(jnp.sum(pvv_net * alloc_j))
+            # Buyer surplus = Σ_i (θ_i - J_i) x_i  (information rent paid to buyers)
+            ep_surplus += gamma**t * float(jnp.sum((types_t - pvv) * alloc_j))
 
             key, subkey = jax.random.split(key)
             state = auction.get_next_state(
