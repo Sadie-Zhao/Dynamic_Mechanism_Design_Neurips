@@ -2,10 +2,16 @@
 mechanisms/network.py — Mechanism network architecture and Mechanism wrapper.
 
 Shared across all four bandit auction experiment variants.
-Architecture:
+
+Two network variants:
+  mechanism_network      — baseline (no cross-buyer attention)
+  mechanism_network_attn — adds cross-buyer attention after the trunk
+
+Both share the same 3-stream input and head structure:
   - 3 input streams: current_report (64) | alloc_history_sum (48) | report_history_attn (32)
   - Time step scalar broadcast to (B, 1) and prepended to report features
   - Shared MLP trunk -> (128 -> 64)
+  - [attn variant only] cross-buyer attention block (B, 64) -> (B, 64)
   - Allocation head: per-buyer score (B,) + shared null score -> (B+1,) softmax per good
     (equivariant: permuting buyers permutes allocation probabilities accordingly)
   - Payment head: MLP -> scalar per buyer (relu for non-negativity)
@@ -141,3 +147,100 @@ class Mechanism:
 def build_mechanism_network() -> hk.Transformed:
     """Returns the haiku-transformed mechanism network."""
     return hk.without_apply_rng(hk.transform(mechanism_network))
+
+
+# ---------------------------------------------------------------------------
+# Cross-buyer attention block
+# ---------------------------------------------------------------------------
+
+def _cross_buyer_attn(h: jnp.ndarray) -> jnp.ndarray:
+    """Single-head self-attention over the buyer dimension with residual + LayerNorm.
+
+    h: (B, d) -> (B, d), permutation-equivariant over buyers.
+
+    Allows each buyer's trunk representation to attend to all other buyers so
+    that the allocation and payment heads can make relative comparisons (needed
+    to approximate the Gittins index comparison across buyers).
+    """
+    B, d = h.shape
+    scale = jnp.sqrt(jnp.float32(d))
+
+    Q = hk.Linear(d, with_bias=False, name="cba_Q")(h)  # (B, d)
+    K = hk.Linear(d, with_bias=False, name="cba_K")(h)  # (B, d)
+    V = hk.Linear(d, with_bias=False, name="cba_V")(h)  # (B, d)
+
+    scores  = jnp.matmul(Q, K.T) / scale                # (B, B)
+    weights = jax.nn.softmax(scores, axis=-1)            # softmax over keys
+    attended = jnp.matmul(weights, V)                    # (B, d)
+
+    return hk.LayerNorm(
+        axis=-1, create_scale=True, create_offset=True, name="cba_ln"
+    )(h + attended)
+
+
+# ---------------------------------------------------------------------------
+# Attention-variant mechanism network
+# ---------------------------------------------------------------------------
+
+def mechanism_network_attn(
+    state: State,
+    report: jnp.ndarray,
+    auction: BanditAuction,
+) -> tuple:
+    """
+    Identical to mechanism_network but inserts a cross-buyer attention block
+    after the shared trunk.  All other streams and heads are unchanged.
+
+    Returns (alloc_probs_with_null, payment):
+      alloc_probs_with_null: (B+1, G)
+      payment:               (B,)
+    """
+    B = auction.num_buyers
+    G = auction.num_goods
+    T = auction.num_horizons
+
+    _t_table = jnp.arange(T + 1, dtype=jnp.float32) / jnp.float32(max(T - 1, 1))
+    t_scalar = _t_table[state.time_step]
+    t_norm   = jnp.ones((B, 1), jnp.float32) * t_scalar
+
+    # Stream 1: current report + time step (B, G+1) -> (B, 64)
+    report_in   = jnp.concatenate(
+        [report.reshape(B, -1).astype(jnp.float32), t_norm], axis=-1
+    )
+    report_feat = hk.nets.MLP([128, 64], activate_final=True)(report_in)
+
+    # Stream 2: cumulative allocation history sum (B, G) -> (B, 48)
+    alloc_sum  = jnp.sum(state.allocation_history, axis=0).astype(jnp.float32)
+    alloc_feat = hk.nets.MLP([96, 48], activate_final=True)(alloc_sum.reshape(B, -1))
+
+    # Stream 3: report history via attention pooling (T, B, G) -> (B, 32)
+    rep_hist      = state.report_history.astype(jnp.float32)
+    rep_hist_feat = _attention_pool(rep_hist, out_dim=32)
+
+    # Concatenate all streams -> (B, 144)
+    h = jnp.concatenate([report_feat, alloc_feat, rep_hist_feat], axis=-1)
+
+    # Shared trunk -> (B, 64)
+    h = hk.nets.MLP([128, 64], activate_final=True)(h)
+
+    # Cross-buyer attention -> (B, 64)
+    h = _cross_buyer_attn(h)
+
+    # ---- Allocation head (equivariant) ----
+    buyer_scores = hk.Linear(G)(h)
+    null_score   = hk.get_parameter(
+        "null_score", shape=(1, G), init=hk.initializers.Constant(0.0)
+    )
+    alloc_logits        = jnp.concatenate([buyer_scores, null_score], axis=0)
+    alloc_probs_with_null = jax.nn.softmax(alloc_logits, axis=0)
+
+    # ---- Payment head ----
+    payment = hk.nets.MLP([64, 32, 1], activate_final=False)(h).squeeze(-1)
+    payment = jax.nn.relu(payment)
+
+    return alloc_probs_with_null, payment
+
+
+def build_mechanism_network_attn() -> hk.Transformed:
+    """Returns the haiku-transformed mechanism network with cross-buyer attention."""
+    return hk.without_apply_rng(hk.transform(mechanism_network_attn))

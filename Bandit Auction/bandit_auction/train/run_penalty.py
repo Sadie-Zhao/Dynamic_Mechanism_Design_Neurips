@@ -31,7 +31,9 @@ from bandit_auction.core import (
     AuctionSimulator, BoundedContPolicy, DiscretePolicy,
     build_bounded_policy_net, build_discrete_policy_net, SEED,
 )
-from bandit_auction.mechanisms.network import Mechanism, build_mechanism_network
+from bandit_auction.mechanisms.network import (
+    Mechanism, build_mechanism_network, build_mechanism_network_attn,
+)
 
 EXPERIMENT_ENVS = {
     "cont_single": ("bandit_auction.envs.cont_single", "create_cont_single_auction"),
@@ -309,7 +311,8 @@ def main():
 
     auction = _build_auction(cfg, seed)
 
-    mechanism_network = build_mechanism_network()
+    use_attn = cfg.get("use_attn_mechanism", False)
+    mechanism_network = build_mechanism_network_attn() if use_attn else build_mechanism_network()
     if is_discrete:
         policy_network = build_discrete_policy_net(
             d_priv=auction.d_priv, d_pub=auction.d_pub,
