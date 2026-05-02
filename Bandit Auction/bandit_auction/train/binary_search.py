@@ -217,23 +217,62 @@ def evaluate_checkpoint_list(
     is_discrete: bool = False,
     seed: int = SEED,
     verbose: bool = True,
+    skip_thresh: float = 2.0,
 ) -> List[Dict]:
-    """Evaluate every checkpoint on held-out eval keys.
+    """Evaluate checkpoints on held-out eval keys, skipping obvious losers.
 
     IC regret is measured via reopt_cumulative_ic (conservative upper bound).
     Adds keys 'revenue_eval', 'regret_eval', 'regret_reopt', 'ir_loss_eval',
-    'buyer_surplus_eval', 'feasible' to each checkpoint dict.
+    'buyer_surplus_eval', 'feasible', 'skipped' to each checkpoint dict.
+
+    Checkpoints whose training gap exceeds skip_thresh * gap_thresh are marked
+    infeasible immediately without running the expensive IC reopt oracle.
+    Set skip_thresh=float('inf') to disable skipping entirely.
+
+    Training gap is read from 'gap_train' (acceptance checkpoints) or computed
+    as profit_goal - profit_train (penalty checkpoints). If neither key is
+    present the checkpoint is always evaluated.
     """
     eval_keys = jax.random.split(
         jax.random.PRNGKey(seed + 77777), cfg["eval_num_keys"]
     )
     ic_thresh  = cfg["ic_thresh"]
     gap_thresh = cfg.get("gap_thresh", 0.1)
+    _skip_gap  = skip_thresh * gap_thresh
 
-    results = []
+    results  = []
+    n_skip   = 0
+    n_eval   = 0
     for i, ckpt in enumerate(checkpoints):
         mparams = ckpt["mechanism_params"]
 
+        # ---- Fast pre-screen on training gap ----
+        if "gap_train" in ckpt:
+            _train_gap = float(ckpt["gap_train"])
+        elif "profit_train" in ckpt:
+            _train_gap = profit_goal - float(ckpt["profit_train"])
+        else:
+            _train_gap = float("nan")  # unknown — don't skip
+
+        if _train_gap > _skip_gap:
+            rec = dict(ckpt)
+            rec["revenue_eval"]       = float("nan")
+            rec["regret_reopt"]       = float("nan")
+            rec["regret_eval"]        = float("nan")
+            rec["ir_loss_eval"]       = float("nan")
+            rec["buyer_surplus_eval"] = float("nan")
+            rec["feasible"]           = False
+            rec["skipped"]            = True
+            results.append(rec)
+            n_skip += 1
+            if verbose:
+                print(f"    [skip] epoch={ckpt['epoch']:4d}  "
+                      f"train_gap={_train_gap:.4f} > {_skip_gap:.3f} "
+                      f"({skip_thresh}×gap_thresh) — IC eval skipped")
+            continue
+
+        # ---- Full IC reopt + eval ----
+        n_eval += 1
         if verbose:
             print(f"    [ckpt {i+1}/{len(checkpoints)}] epoch={ckpt['epoch']:4d} — "
                   f"re-optimising oracle ({cfg['ic_reopt_restarts']} restarts × "
@@ -271,6 +310,7 @@ def evaluate_checkpoint_list(
         rec["regret_eval"]        = ev["regret_stats"]["mean"]        if "regret_stats"        in ev else float("nan")
         rec["ir_loss_eval"]       = ev["ir_loss_stats"]["mean"]       if "ir_loss_stats"       in ev else float("nan")
         rec["buyer_surplus_eval"] = ev["buyer_surplus_stats"]["mean"] if "buyer_surplus_stats" in ev else float("nan")
+        rec["skipped"]            = False
 
         _ic_for_check = max(best_regret, rec["regret_eval"])
         _revenue_gap  = profit_goal - rec["revenue_eval"]
@@ -284,7 +324,11 @@ def evaluate_checkpoint_list(
                   f"IC_reopt={best_regret:.4f}  IC_eval={rec['regret_eval']:.4f}  "
                   f"surplus={rec.get('buyer_surplus_eval', float('nan')):.4f}")
 
-    results.sort(key=lambda r: (not r["feasible"], -r["revenue_eval"]))
+    if verbose and n_skip:
+        print(f"  — skipped {n_skip}/{len(checkpoints)} checkpoints "
+              f"(train gap > {_skip_gap:.3f}); ran IC eval on {n_eval}.")
+
+    results.sort(key=lambda r: (not r["feasible"], -(r["revenue_eval"] or 0.0)))
     return results
 
 
