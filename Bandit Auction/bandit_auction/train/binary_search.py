@@ -314,7 +314,12 @@ def evaluate_checkpoint_list(
 
         _ic_for_check = max(best_regret, rec["regret_eval"])
         _revenue_gap  = profit_goal - rec["revenue_eval"]
-        rec["feasible"] = (_ic_for_check <= ic_thresh) and (_revenue_gap <= gap_thresh)
+        _ir_for_check = rec["ir_loss_eval"]
+        rec["feasible"] = (
+            (_ic_for_check <= ic_thresh)
+            and (_revenue_gap  <= gap_thresh)
+            and (_ir_for_check <= ic_thresh)
+        )
 
         results.append(rec)
         if verbose:
@@ -322,6 +327,7 @@ def evaluate_checkpoint_list(
             print(f"    [{flag}] epoch={rec['epoch']:4d}  "
                   f"rev={rec['revenue_eval']:.4f}  gap={_revenue_gap:.4f}  "
                   f"IC_reopt={best_regret:.4f}  IC_eval={rec['regret_eval']:.4f}  "
+                  f"IR_eval={_ir_for_check:.4f}  "
                   f"surplus={rec.get('buyer_surplus_eval', float('nan')):.4f}")
 
     if verbose and n_skip:
