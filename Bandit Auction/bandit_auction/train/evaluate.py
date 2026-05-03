@@ -101,8 +101,11 @@ def eval_mechanism_multikey(
         rewards = AuctionSimulator.estimate_cumulative_rewards(
             auction, mechanism, num_samples=num_samples, key=k2
         )
-        ir   = jnp.sum(jax.nn.relu(-rewards))
-        surplus = jnp.sum(rewards)
+        ir_per_buyer = AuctionSimulator.estimate_relu_cumulative_rewards(
+            auction, mechanism, num_samples=num_samples, key=k2
+        )
+        ir      = jnp.sum(ir_per_buyer)   # E[relu(-U_i)], summed over buyers
+        surplus = jnp.sum(rewards)        # E[U_i], summed over buyers
 
         profits.append(prof)
         gaps.append(gap)
