@@ -663,3 +663,177 @@ def eval_pavan_discrete(
         total_surplus += ep_surplus
 
     return total_revenue / num_samples, total_surplus / num_samples
+
+
+# ---------------------------------------------------------------------------
+# Correct bandit auction Gittins benchmark for discrete_single
+# ---------------------------------------------------------------------------
+
+def _discrete_inv_hz(type_values, k0: int) -> float:
+    """Discrete inverse hazard rate at initial type index k0 (0-indexed).
+
+    For a uniform prior over K sorted type values {v^0,...,v^{K-1}}:
+
+        inv_hz(k) = (K - 1 - k) * (v^{k+1} - v^k)   for k < K-1
+        inv_hz(K-1) = 0
+
+    Derivation: the standard Myerson discrete virtual valuation is
+        psi(v^k) = v^k - [(1 - F(v^k)) / pi_k] * (v^{k+1} - v^k)
+    where F(v^k) = (k+1)/K and pi_k = 1/K for uniform prior, giving
+        (1 - F(v^k)) / pi_k = K - 1 - k.
+    So inv_hz(k) = (K-1-k) * (v^{k+1} - v^k) is the PST information-rent
+    coefficient, fixed at the initial type (identical role to (1-F_0)/f_0
+    in the continuous Gittins benchmark).
+    """
+    K = len(type_values)
+    if k0 >= K - 1:
+        return 0.0
+    step = float(type_values[k0 + 1]) - float(type_values[k0])
+    return float(K - 1 - k0) * step
+
+
+def _gittins_index_discrete(
+    auction,
+    state,
+    buyer_i: int,
+    inv_hz_i: float,
+    c_i: float,
+    num_index_samples: int,
+    key: jax.random.PRNGKey,
+) -> float:
+    """Gittins stopping-time index for buyer i, discrete type case.
+
+    Structurally identical to _gittins_index() for continuous types.
+    Flow payoff: phi(v_it) = v_it - c_i - inv_hz_i
+    where inv_hz_i is the discrete inv_hz fixed at the initial type.
+    """
+    t = int(state.time_step)
+    T = auction.num_horizons
+    gamma = float(auction.discount)
+    B = auction.num_buyers
+    G = auction.num_goods
+    sample_keys = jax.random.split(key, num_index_samples)
+
+    all_paths = []
+    for sk in sample_keys:
+        sim = state
+        path = []
+        for s in range(t, T):
+            sk, step_key = jax.random.split(sk)
+            path.append(float(sim.current_type[buyer_i, 0]))
+            alloc = jnp.zeros((B, G)).at[buyer_i, 0].set(1.0)
+            sim = auction.get_next_state(sim, sim.current_type, alloc, step_key)
+        all_paths.append(path)
+
+    best_ratio = float('-inf')
+    for tau_stop in range(t, T):
+        length = tau_stop - t + 1
+        ratios = []
+        for path in all_paths:
+            num = sum(gamma**s * (path[s] - c_i - inv_hz_i) for s in range(length))
+            den = sum(gamma**s for s in range(length))
+            ratios.append(num / den)
+        best_ratio = max(best_ratio, float(np.mean(ratios)))
+    return best_ratio
+
+
+def eval_pavan_bandit_auction_discrete(
+    auction,
+    num_samples: int = 500,
+    num_index_samples: int = 100,
+    seed: int = 0,
+) -> Tuple[float, float]:
+    """Bandit auction Gittins benchmark for discrete_single (PST 2014, Section 5).
+
+    Discrete analogue of eval_pavan_bandit_auction:
+
+    - inv_hz_disc(k_0) = (K-1-k_0) * (v^{k_0+1} - v^{k_0}) computed once at the
+      INITIAL type index k_0 (uniform prior, 0-indexed), fixed for the entire episode.
+    - Gittins stopping-time index with flow payoff phi(v_it) = v_it - c_i - inv_hz_i.
+    - Revenue = E[sum_t delta^t sum_i (v_it - inv_hz_i - c_i) x_it]  (PST identity).
+    - Buyer surplus ~ E[sum_t delta^t inv_hz_i x_it]  (envelope theorem).
+
+    Approximation: impulse response I_{i,0,t} ~ 1 for allocated buyers (same
+    assumption as the continuous Gittins benchmark). Under the discrete
+    exponential-decay kernel, a buyer allocated repeatedly concentrates near its
+    current type (decay_rate=0.5 when allocated vs. 0 when not), so the initial
+    type is informative about future types -- making I ~ 1 a reasonable approximation.
+
+    For {1,2,3} uniform prior (K=3, step=1):
+        k_0=0 (v=1): inv_hz = 2,  phi_0 = 1 - c - 2 < 0  (low type, rarely profitable)
+        k_0=1 (v=2): inv_hz = 1,  phi_0 = 2 - c - 1 > 0
+        k_0=2 (v=3): inv_hz = 0,  phi_0 = 3 - c > 0
+
+    Args:
+        auction:            BanditAuction from create_discrete_single_auction
+        num_samples:        Monte Carlo episodes for revenue estimation
+        num_index_samples:  MC rollouts per Gittins index evaluation
+        seed:               RNG seed
+
+    Returns:
+        (revenue, buyer_surplus)
+    """
+    type_vals = auction.buyer_types[0, :, 0]  # (K,) sorted type values, e.g. [1,2,3]
+    B = auction.num_buyers
+    G = auction.num_goods
+    T = auction.num_horizons
+    gamma = float(auction.discount)
+
+    key = jax.random.PRNGKey(seed)
+    total_revenue = 0.0
+    total_surplus = 0.0
+
+    for ep in range(num_samples):
+        key, ep_key = jax.random.split(key)
+        state = auction.get_initial_state(ep_key)
+
+        # Compute discrete inv_hz at INITIAL types -- fixed for this episode.
+        inv_hazard = []
+        for i in range(B):
+            v0 = float(state.current_type[i, 0])
+            k0 = int(jnp.argmin(jnp.abs(type_vals - v0)))
+            inv_hazard.append(_discrete_inv_hz(type_vals, k0))
+
+        ep_revenue = 0.0
+        ep_surplus = 0.0
+
+        for t in range(T):
+            key, idx_key = jax.random.split(key)
+            idx_keys = jax.random.split(idx_key, B)
+
+            indices = jnp.array([
+                _gittins_index_discrete(
+                    auction, state, i,
+                    inv_hazard[i], float(auction.allocation_cost[i, 0]),
+                    num_index_samples, idx_keys[i],
+                )
+                for i in range(B)
+            ])
+
+            best_i = int(jnp.argmax(indices))
+            alloc_2d = jnp.zeros((B, G))
+            if float(indices[best_i]) >= 0.0:
+                alloc_2d = alloc_2d.at[best_i, 0].set(1.0)
+
+            types_t = state.current_type[:, 0]
+            inv_hz_arr = jnp.array(inv_hazard)
+            costs = auction.allocation_cost[:, 0]
+            virtual_surplus = float(
+                jnp.sum((types_t - inv_hz_arr - costs) * alloc_2d[:, 0])
+            )
+            ep_revenue += gamma**t * virtual_surplus
+            ep_surplus += gamma**t * float(jnp.sum(inv_hz_arr * alloc_2d[:, 0]))
+
+            key, trans_key = jax.random.split(key)
+            state = auction.get_next_state(
+                state, state.current_type, alloc_2d, trans_key
+            )
+
+        total_revenue += ep_revenue
+        total_surplus += ep_surplus
+
+        if (ep + 1) % 100 == 0:
+            print(f'  [{ep+1}/{num_samples}] mean rev so far: '
+                  f'{total_revenue / (ep + 1):.4f}')
+
+    return total_revenue / num_samples, total_surplus / num_samples
