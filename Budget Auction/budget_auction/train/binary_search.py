@@ -83,6 +83,10 @@ DEFAULT_BS_CFG = dict(
     # Prevents a low-revenue IC solution from falsely pushing pg_lo upward.
     # Natural default: same as pg_tol so feasibility means "within search resolution".
     gap_thresh = 0.1,
+    # Checkpoints with gap_train > skip_gap_mult * gap_thresh are skipped before
+    # the expensive IC re-opt + eval pass. Raise if good checkpoints are being
+    # skipped; lower to save more compute.
+    skip_gap_mult = 2.0,
 
     # IC re-optimisation at eval time (separate from the training inner loop).
     # For each checkpoint, the oracle policy is re-solved from scratch against
@@ -280,6 +284,27 @@ def evaluate_checkpoint_list(
     results = []
     for i, ckpt in enumerate(checkpoints):
         mparams = ckpt["mechanism_params"]
+
+        # Skip expensive IC re-opt + eval if training gap is already too large.
+        # gap_train ≈ profit_goal - revenue_train; if it exceeds 2×gap_thresh the
+        # checkpoint cannot pass the feasibility check (which requires eval gap ≤ gap_thresh).
+        gap_train     = ckpt.get("gap_train", float("inf"))
+        skip_gap_mult = cfg.get("skip_gap_mult", 2.0)
+        if gap_train > skip_gap_mult * gap_thresh:
+            if verbose:
+                print(f"    [skip] epoch={ckpt['epoch']:4d} — "
+                      f"gap_train={gap_train:.4f} > {skip_gap_mult}×gap_thresh={skip_gap_mult*gap_thresh:.4f}")
+            rec = dict(ckpt)
+            rec["revenue_eval"]       = float("nan")
+            rec["regret_reopt"]       = float("nan")
+            rec["regret_eval"]        = float("nan")
+            rec["ir_loss_eval"]       = float("nan")
+            rec["buyer_surplus_eval"] = float("nan")
+            rec["budget_viol_eval"]   = float("nan")
+            rec["ir_viol_eval"]       = float("nan")
+            rec["feasible"]           = False
+            results.append(rec)
+            continue
 
         if verbose:
             print(f"    [ckpt {i+1}/{len(checkpoints)}] epoch={ckpt['epoch']:4d} — "
