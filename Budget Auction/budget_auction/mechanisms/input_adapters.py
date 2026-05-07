@@ -28,15 +28,19 @@ from budget_auction.core import BudgetState, BudgetAuction
 # ---------------------------------------------------------------------------
 
 def _alloc_head(h: jnp.ndarray, num_buyers: int, num_goods: int) -> jnp.ndarray:
-    """Allocation head: h (B, d_hidden) -> alloc_probs (B+1, G) with softmax over buyers."""
-    # For each good, project each buyer's hidden rep to a logit
-    logits_per_good = []
-    for g in range(num_goods):
-        raw = hk.Linear(num_buyers + 1)(h)           # (B, B+1)
-        logit = jnp.mean(raw, axis=0)                 # (B+1,) average over buyers
-        logits_per_good.append(logit)
-    alloc_logits = jnp.stack(logits_per_good, axis=1)  # (B+1, G)
-    return jax.nn.softmax(alloc_logits, axis=0)          # (B+1, G)
+    """Allocation head: h (B, d_hidden) -> alloc_probs (B+1, G) with softmax over buyers+null.
+
+    Each buyer gets an independent score per good via a shared linear projection.
+    A learnable null-slot score per good captures the unallocated probability mass.
+    Permutation equivariant: permuting buyers permutes scores and thus permutes alloc_probs.
+    """
+    scores = hk.Linear(num_goods)(h)                  # (B, G): per-buyer score per good
+    null_scores = hk.get_parameter(
+        'null_scores', [1, num_goods],
+        init=hk.initializers.Constant(0.)
+    )                                                   # (1, G): learnable null-slot score
+    alloc_logits = jnp.concatenate([scores, null_scores], axis=0)  # (B+1, G)
+    return jax.nn.softmax(alloc_logits, axis=0)        # (B+1, G), sums to 1 over buyers+null
 
 
 def _payment_head(h: jnp.ndarray) -> jnp.ndarray:
