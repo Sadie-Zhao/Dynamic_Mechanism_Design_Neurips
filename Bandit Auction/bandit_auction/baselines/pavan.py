@@ -692,55 +692,66 @@ def _discrete_inv_hz(type_values, k0: int) -> float:
     return float(K - 1 - k0) * step
 
 
-def _gittins_index_discrete(
-    auction,
-    state,
-    buyer_i: int,
+def _make_discrete_transition_matrix(type_values, decay_rate: float) -> np.ndarray:
+    """Row-stochastic K×K transition matrix for given decay_rate.
+
+    P[j, k] ∝ exp(-decay_rate * |v^k - v^j|), normalized per row.
+    When decay_rate=0 (not allocated) this gives the uniform matrix.
+    When decay_rate=0.5 (allocated) types concentrate around the current type.
+    """
+    v = np.array([float(x) for x in type_values], dtype=np.float64)
+    K = len(v)
+    P = np.zeros((K, K))
+    for j in range(K):
+        for k in range(K):
+            P[j, k] = np.exp(-decay_rate * abs(v[k] - v[j]))
+        P[j, :] /= P[j, :].sum()
+    return P
+
+
+def _gittins_index_discrete_analytical(
+    P_alloc: np.ndarray,   # (K, K) row-stochastic transition matrix when allocating
+    type_values,           # array-like of K sorted type values
+    k_curr: int,           # current type index (0-indexed)
     inv_hz_i: float,
     c_i: float,
-    num_index_samples: int,
-    key: jax.random.PRNGKey,
+    t: int,                # current time step (0-indexed)
+    T: int,                # total horizon
+    gamma: float,
 ) -> float:
-    """Gittins stopping-time index for buyer i, discrete type case.
+    """Exact Gittins stopping-time index via transition-matrix expectations.
 
-    Structurally identical to _gittins_index() for continuous types.
-    Flow payoff: phi(v_it) = v_it - c_i - inv_hz_i
-    where inv_hz_i is the discrete inv_hz fixed at the initial type.
+    E[v_{t+s} | k_curr, always_alloc] = (e_k @ P_alloc^s) @ v  (exact, no MC).
+
+    Returns max_L  [Σ_{s=0}^{L-1} δ^s * E[phi_s | k_curr]] / [Σ_{s=0}^{L-1} δ^s]
+    where phi_s = v_s - c_i - inv_hz_i and L ranges over 1..T-t.
     """
-    t = int(state.time_step)
-    T = auction.num_horizons
-    gamma = float(auction.discount)
-    B = auction.num_buyers
-    G = auction.num_goods
-    sample_keys = jax.random.split(key, num_index_samples)
+    v = np.array([float(x) for x in type_values], dtype=np.float64)
+    K = len(v)
 
-    all_paths = []
-    for sk in sample_keys:
-        sim = state
-        path = []
-        for s in range(t, T):
-            sk, step_key = jax.random.split(sk)
-            path.append(float(sim.current_type[buyer_i, 0]))
-            alloc = jnp.zeros((B, G)).at[buyer_i, 0].set(1.0)
-            sim = auction.get_next_state(sim, sim.current_type, alloc, step_key)
-        all_paths.append(path)
+    e_k = np.zeros(K)
+    e_k[k_curr] = 1.0  # distribution = point mass at current type
 
     best_ratio = float('-inf')
-    for tau_stop in range(t, T):
-        length = tau_stop - t + 1
-        ratios = []
-        for path in all_paths:
-            num = sum(gamma**s * (path[s] - c_i - inv_hz_i) for s in range(length))
-            den = sum(gamma**s for s in range(length))
-            ratios.append(num / den)
-        best_ratio = max(best_ratio, float(np.mean(ratios)))
+    numerator = 0.0
+    denominator = 0.0
+
+    for s in range(T - t):
+        expected_v = float(e_k @ v)
+        phi = expected_v - c_i - inv_hz_i
+        delta_s = gamma ** s
+        numerator += delta_s * phi
+        denominator += delta_s
+        best_ratio = max(best_ratio, numerator / denominator)
+        e_k = e_k @ P_alloc  # advance type distribution by one step
+
     return best_ratio
 
 
 def eval_pavan_bandit_auction_discrete(
     auction,
     num_samples: int = 500,
-    num_index_samples: int = 100,
+    num_index_samples: int = 50,   # kept for API compatibility; not used (analytical)
     seed: int = 0,
 ) -> Tuple[float, float]:
     """Bandit auction Gittins benchmark for discrete_single (PST 2014, Section 5).
@@ -753,81 +764,79 @@ def eval_pavan_bandit_auction_discrete(
     - Revenue = E[sum_t delta^t sum_i (v_it - inv_hz_i - c_i) x_it]  (PST identity).
     - Buyer surplus ~ E[sum_t delta^t inv_hz_i x_it]  (envelope theorem).
 
-    Approximation: impulse response I_{i,0,t} ~ 1 for allocated buyers (same
-    assumption as the continuous Gittins benchmark). Under the discrete
-    exponential-decay kernel, a buyer allocated repeatedly concentrates near its
-    current type (decay_rate=0.5 when allocated vs. 0 when not), so the initial
-    type is informative about future types -- making I ~ 1 a reasonable approximation.
+    Gittins indices are computed analytically via the K×K transition matrix
+    (no MC rollouts needed), so num_index_samples is ignored.
+    The outer trajectory simulation is pure numpy — no JAX calls in the inner loop.
+
+    Transition kernel (from discrete_transition_fn / _discrete_transition_prob):
+      P_alloc[j,k] ∝ exp(-0.5 * |v^k - v^j|)  (when buyer is allocated)
+      P_no[j,k] = 1/K                           (uniform, when not allocated)
 
     For {1,2,3} uniform prior (K=3, step=1):
-        k_0=0 (v=1): inv_hz = 2,  phi_0 = 1 - c - 2 < 0  (low type, rarely profitable)
-        k_0=1 (v=2): inv_hz = 1,  phi_0 = 2 - c - 1 > 0
-        k_0=2 (v=3): inv_hz = 0,  phi_0 = 3 - c > 0
+        k_0=0 (v=1): inv_hz = 2,  phi = 1 - c - 2 < 0  (never allocated)
+        k_0=1 (v=2): inv_hz = 1,  phi = 2 - c - 1 > 0
+        k_0=2 (v=3): inv_hz = 0,  phi = 3 - c > 0
 
     Args:
         auction:            BanditAuction from create_discrete_single_auction
         num_samples:        Monte Carlo episodes for revenue estimation
-        num_index_samples:  MC rollouts per Gittins index evaluation
+        num_index_samples:  ignored (analytical Gittins, no MC rollouts)
         seed:               RNG seed
 
     Returns:
         (revenue, buyer_surplus)
     """
-    type_vals = auction.buyer_types[0, :, 0]  # (K,) sorted type values, e.g. [1,2,3]
+    type_vals = np.array([float(v) for v in auction.buyer_types[0, :, 0]])
+    K = len(type_vals)
     B = auction.num_buyers
-    G = auction.num_goods
     T = auction.num_horizons
     gamma = float(auction.discount)
+    c = float(auction.allocation_cost[0, 0])
 
-    key = jax.random.PRNGKey(seed)
+    # Precompute transition matrix for the "always allocate" scenario (decay_rate=0.5)
+    # Non-allocated transition is uniform: rng.integers(0, K) samples it directly.
+    P_alloc = _make_discrete_transition_matrix(type_vals, decay_rate=0.5)
+
+    rng = np.random.default_rng(seed)
     total_revenue = 0.0
     total_surplus = 0.0
 
     for ep in range(num_samples):
-        key, ep_key = jax.random.split(key)
-        state = auction.get_initial_state(ep_key)
+        # Sample initial type indices uniformly (matches make_discrete_sampler)
+        k_curr = rng.integers(0, K, size=B)
 
-        # Compute discrete inv_hz at INITIAL types -- fixed for this episode.
-        inv_hazard = []
-        for i in range(B):
-            v0 = float(state.current_type[i, 0])
-            k0 = int(jnp.argmin(jnp.abs(type_vals - v0)))
-            inv_hazard.append(_discrete_inv_hz(type_vals, k0))
+        # Discrete inv_hz at INITIAL types — fixed for this episode
+        inv_hazard = np.array([_discrete_inv_hz(type_vals, int(k)) for k in k_curr])
 
         ep_revenue = 0.0
         ep_surplus = 0.0
 
         for t in range(T):
-            key, idx_key = jax.random.split(key)
-            idx_keys = jax.random.split(idx_key, B)
-
-            indices = jnp.array([
-                _gittins_index_discrete(
-                    auction, state, i,
-                    inv_hazard[i], float(auction.allocation_cost[i, 0]),
-                    num_index_samples, idx_keys[i],
+            # Analytical Gittins index per buyer (microseconds, no JAX)
+            indices = np.array([
+                _gittins_index_discrete_analytical(
+                    P_alloc, type_vals, int(k_curr[i]),
+                    inv_hazard[i], c, t, T, gamma,
                 )
                 for i in range(B)
             ])
 
-            best_i = int(jnp.argmax(indices))
-            alloc_2d = jnp.zeros((B, G))
+            best_i = int(np.argmax(indices))
             if float(indices[best_i]) >= 0.0:
-                alloc_2d = alloc_2d.at[best_i, 0].set(1.0)
+                phi_i = float(type_vals[k_curr[best_i]]) - c - inv_hazard[best_i]
+                ep_revenue += gamma ** t * phi_i
+                ep_surplus += gamma ** t * float(inv_hazard[best_i])
 
-            types_t = state.current_type[:, 0]
-            inv_hz_arr = jnp.array(inv_hazard)
-            costs = auction.allocation_cost[:, 0]
-            virtual_surplus = float(
-                jnp.sum((types_t - inv_hz_arr - costs) * alloc_2d[:, 0])
-            )
-            ep_revenue += gamma**t * virtual_surplus
-            ep_surplus += gamma**t * float(jnp.sum(inv_hz_arr * alloc_2d[:, 0]))
-
-            key, trans_key = jax.random.split(key)
-            state = auction.get_next_state(
-                state, state.current_type, alloc_2d, trans_key
-            )
+                # Transition: allocated buyer uses P_alloc, others reset to uniform
+                k_next = k_curr.copy()
+                k_next[best_i] = rng.choice(K, p=P_alloc[k_curr[best_i]])
+                for j in range(B):
+                    if j != best_i:
+                        k_next[j] = rng.integers(0, K)
+                k_curr = k_next
+            else:
+                # No allocation: all buyers reset uniformly (decay_rate=0 → uniform)
+                k_curr = rng.integers(0, K, size=B)
 
         total_revenue += ep_revenue
         total_surplus += ep_surplus
