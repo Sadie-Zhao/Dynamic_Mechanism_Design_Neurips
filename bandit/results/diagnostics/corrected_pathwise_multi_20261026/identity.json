@@ -1,0 +1,68 @@
+{
+  "config": {
+    "phase": "diagnostic_not_replacement_for_rebuttal",
+    "purpose": "Short corrected pathwise search on the saved mechanism, preserving the original winning M1/wide forward class and adding separate buyer selection and independent evaluation",
+    "setting": "multi",
+    "arch": "wide",
+    "info": "m1",
+    "hidden": 128,
+    "steps": 300,
+    "restarts": 2,
+    "eval_every": 25,
+    "lr": 0.0005,
+    "samples": 64,
+    "validation_samples": 512,
+    "final_batches": 32,
+    "final_samples": 256,
+    "seed": 8326026,
+    "evaluation_seed": 8426026
+  },
+  "environment": {
+    "seed": 42,
+    "n_buyers": 2,
+    "n_goods": 2,
+    "horizon": 5,
+    "discount": 0.9,
+    "type_mean": 2.5,
+    "type_std": 0.1,
+    "types_low": 0.0,
+    "types_high": 5.0,
+    "allocation_cost": 0.1,
+    "sigma_no": 0.0,
+    "trans_lambda": 3.0
+  },
+  "config_sha256": "83b83372aff9194eb9fceab74d0bb6bd2345119dedf39ab38b614bcb7730ff1b",
+  "source_sha256": {
+    "bandit_auction/__init__.py": "a931097f585377965705a4dc97b63487520df2acdb5307accf4c3171165d0970",
+    "bandit_auction/baselines/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bandit_auction/baselines/pavan.py": "8b770c0ee1d3023976815b72703af3a3ef8063caeb02669572c2c3999ddaef63",
+    "bandit_auction/core.py": "42f519b128cc1e5e76655b749843ccd26f27abc1ad35b6896700ed106c245926",
+    "bandit_auction/envs/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bandit_auction/envs/cont_multi.py": "618d25a9ce50c0e71e226eabb42491740a974cddbda387aff9a39a92f6e7526e",
+    "bandit_auction/envs/cont_single.py": "9bd7e7e01d9cc67eb7eae5baf52ede7d140eb1043a7c1afb6c6a4eeda636214a",
+    "bandit_auction/envs/discrete_multi.py": "5d326c564d176e453104fb16fd76f0ca2c26b01d2e8b8db81aae55125363943d",
+    "bandit_auction/envs/discrete_single.py": "c596fdd779379f8d3bca5454a4282d0f0ec4674a5e8f5aa8cb84714dcdb6b601",
+    "bandit_auction/mechanisms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bandit_auction/mechanisms/network.py": "fab53462766471cc7c3fe9e3c09d6da1137538c563ad3541adb038478e86562b",
+    "bandit_auction/train/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bandit_auction/train/binary_search.py": "4e35329baed9d1560a17197af559adc045186848a194444b5ce53b40dcf382ee",
+    "bandit_auction/train/evaluate.py": "94c934d94bc1b03e7723347b7b15eafce901abbcb9648404704675976a0d5038",
+    "bandit_auction/train/run_acceptance.py": "a408395bafa0ce70f6552f9a3b8edd8721c2ef00eea17bbbe02fafb6f39cf252",
+    "bandit_auction/train/run_penalty.py": "6fcb056706912f5736db0df201719a32b6587d55a6f25773aff2e95b3970e1d0",
+    "audit/cont_cfg.py": "85b386fbc1978a66b00d195594c42cce59497073038ef5a025766a339139400c",
+    "audit/cont_oracle.py": "0e8bfa8a612706fc809176b0a9abf1f105ab08a4359f05a1268240b8acf90aeb",
+    "audit/cont_pathwise_corrected.py": "467764c03490f7839a6d8f146253e1839b030a51c30a663f310c33cd9b5876ec"
+  },
+  "inputs_sha256": {
+    "mechanism_params.pkl": "ac57bc57664fffc72f00085054a49e5f1c6b57eb0708153418c3b7f1e0c9624a",
+    "config.yaml": "7583e7cf264e57cde74cad3e2ce231b808efb05a77910c57504173f4a8fdfbee"
+  },
+  "packages": {
+    "jax": "0.4.38",
+    "jaxlib": "0.4.38",
+    "dm-haiku": "0.0.13",
+    "flax": "0.10.2",
+    "optax": "0.2.4",
+    "numpy": "1.26.4"
+  }
+}

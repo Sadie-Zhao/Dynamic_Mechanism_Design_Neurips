@@ -1,0 +1,24 @@
+{
+  "experiment": "discrete_single",
+  "oracle": "exactBR-M2 (constrained PI)",
+  "info_class": "M2",
+  "info_set": "(own type, belief, own report history, public cumulative allocation)",
+  "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+  "tol": 0.001,
+  "restarts": 8,
+  "truthful_value": 0.8789358139038086,
+  "exactBR_value": 0.9461057782173157,
+  "exactBR_regret_per_buyer": 0.06716996431350708,
+  "all_restart_values": [
+    0.9387907385826111,
+    0.9461057782173157
+  ],
+  "info_states_per_level": [
+    3,
+    27,
+    243,
+    2187,
+    19683
+  ],
+  "note": "belief-restricted exact BR via constrained policy iteration (exact eval + per-infostate greedy improvement). Cross-check vs M1-NPG; if they agree, this is the M1 ceiling (capacity-sufficient). Upper-bounded by non-clairvoyant (=M2 exactBR)."
+}

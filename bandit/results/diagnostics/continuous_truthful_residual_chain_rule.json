@@ -1,0 +1,13 @@
+{
+  "role": "zero_residual_identity_chain_rule_check_no_training",
+  "input_type": 2.5,
+  "preserved_report": 2.5,
+  "full_report": 2.5,
+  "expected_derivative": 1.0,
+  "preserved_derivative": 0.0,
+  "full_derivative": 1.0,
+  "jax": "0.4.38",
+  "source_sha256": "0e8bfa8a612706fc809176b0a9abf1f105ab08a4359f05a1268240b8acf90aeb",
+  "verification_script_sha256": "ad1d2e55cdb535ce7387ac9d3adb03bd96b7ec6991e724fac3cb1cc6e3d771fb",
+  "interpretation": "A zero-residual report equals the interior current type, so its derivative with respect to that type is one. The original detach drops this path when future types depend on earlier reporting decisions. This is separate from score-function differentiation with fixed sampled actions."
+}

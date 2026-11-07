@@ -1,0 +1,2063 @@
+{
+  "state": "target_complete",
+  "case_id": "e1_A_wide_s01_t02__select5",
+  "logical_case": "e1_A_wide_s01",
+  "original_unit": "e1_A_wide_s01_t02",
+  "unit_kind": "target",
+  "target": 2.3,
+  "strong": {
+    "ic_upper": 0.019719701260328293,
+    "audit": {
+      "deviation_gain_per_buyer": [
+        0.009477365761995316,
+        0.007740634027868509
+      ],
+      "deviation_se_per_buyer": [
+        0.0006617754115723073,
+        0.0006146266241557896
+      ],
+      "ic_per_buyer": [
+        0.009477365761995316,
+        0.007740634027868509
+      ],
+      "ic_sum": 0.017217999324202538,
+      "ic_mean": 0.008608999662101269,
+      "ic_max_buyer": 0.009477365761995316,
+      "ic_sum_sampling_ucb95": 0.019719701260328293,
+      "evidence_type": "empirical_fixed_policy_audit"
+    },
+    "revenue": {
+      "mean": 2.13419771194458,
+      "std": 0.022969722747802734,
+      "se": 0.004060511679236553,
+      "ci95": [
+        2.1262391090532766,
+        2.1421563148358835
+      ],
+      "num_batches": 32,
+      "min": 2.079822540283203,
+      "max": 2.1827645301818848,
+      "median": 2.134873867034912
+    },
+    "observed_feasible": true,
+    "batches": 32,
+    "samples_per_batch": 256,
+    "ic_threshold": 0.04,
+    "raw_batches": [
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 0,
+          "samples": 256
+        },
+        "gains": [
+          0.010308362543582916,
+          0.007110476493835449
+        ],
+        "revenue": 2.158270835876465,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 1,
+          "samples": 256
+        },
+        "gains": [
+          0.008080331608653069,
+          0.0095339585095644
+        ],
+        "revenue": 2.140760660171509,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 2,
+          "samples": 256
+        },
+        "gains": [
+          0.010097842663526535,
+          0.009558909572660923
+        ],
+        "revenue": 2.136930227279663,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 3,
+          "samples": 256
+        },
+        "gains": [
+          0.008199825882911682,
+          0.013507191091775894
+        ],
+        "revenue": 2.140540838241577,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 4,
+          "samples": 256
+        },
+        "gains": [
+          0.005077863112092018,
+          0.010161852464079857
+        ],
+        "revenue": 2.1598258018493652,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 5,
+          "samples": 256
+        },
+        "gains": [
+          0.009938187897205353,
+          0.009748086333274841
+        ],
+        "revenue": 2.108440399169922,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 6,
+          "samples": 256
+        },
+        "gains": [
+          0.00872873980551958,
+          0.007704392075538635
+        ],
+        "revenue": 2.168300151824951,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 7,
+          "samples": 256
+        },
+        "gains": [
+          0.01836847886443138,
+          0.014618447050452232
+        ],
+        "revenue": 2.1154181957244873,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 8,
+          "samples": 256
+        },
+        "gains": [
+          0.00842167716473341,
+          0.0075909048318862915
+        ],
+        "revenue": 2.125356912612915,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 9,
+          "samples": 256
+        },
+        "gains": [
+          0.006847127340734005,
+          0.006997718010097742
+        ],
+        "revenue": 2.123109817504883,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 10,
+          "samples": 256
+        },
+        "gains": [
+          0.007848447188735008,
+          0.005736644845455885
+        ],
+        "revenue": 2.1194958686828613,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 11,
+          "samples": 256
+        },
+        "gains": [
+          0.005969128105789423,
+          0.0086631178855896
+        ],
+        "revenue": 2.1194190979003906,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 12,
+          "samples": 256
+        },
+        "gains": [
+          0.004869747441262007,
+          0.0073655578307807446
+        ],
+        "revenue": 2.1288094520568848,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 13,
+          "samples": 256
+        },
+        "gains": [
+          0.01036449521780014,
+          0.003065292490646243
+        ],
+        "revenue": 2.1466922760009766,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 14,
+          "samples": 256
+        },
+        "gains": [
+          0.006398345809429884,
+          0.0057462360709905624
+        ],
+        "revenue": 2.1257500648498535,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 15,
+          "samples": 256
+        },
+        "gains": [
+          0.01525360532104969,
+          0.0056389085948467255
+        ],
+        "revenue": 2.1103498935699463,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 16,
+          "samples": 256
+        },
+        "gains": [
+          0.011734980158507824,
+          0.010385298170149326
+        ],
+        "revenue": 2.127498149871826,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 17,
+          "samples": 256
+        },
+        "gains": [
+          0.01800393871963024,
+          0.006602453999221325
+        ],
+        "revenue": 2.1061291694641113,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 18,
+          "samples": 256
+        },
+        "gains": [
+          0.012559184804558754,
+          0.01249439176172018
+        ],
+        "revenue": 2.137742280960083,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 19,
+          "samples": 256
+        },
+        "gains": [
+          0.008913926780223846,
+          0.0035120483953505754
+        ],
+        "revenue": 2.1827645301818848,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 20,
+          "samples": 256
+        },
+        "gains": [
+          0.00936419889330864,
+          0.013956837356090546
+        ],
+        "revenue": 2.079822540283203,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 21,
+          "samples": 256
+        },
+        "gains": [
+          0.006987867411226034,
+          0.005991802550852299
+        ],
+        "revenue": 2.132146120071411,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 22,
+          "samples": 256
+        },
+        "gains": [
+          0.004806975368410349,
+          0.00909197423607111
+        ],
+        "revenue": 2.177384853363037,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 23,
+          "samples": 256
+        },
+        "gains": [
+          0.0130260419100523,
+          0.004374242853373289
+        ],
+        "revenue": 2.1052277088165283,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 24,
+          "samples": 256
+        },
+        "gains": [
+          0.007011623587459326,
+          0.00737196858972311
+        ],
+        "revenue": 2.1342692375183105,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 25,
+          "samples": 256
+        },
+        "gains": [
+          0.0065602525137364864,
+          0.01046931091696024
+        ],
+        "revenue": 2.136408805847168,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 26,
+          "samples": 256
+        },
+        "gains": [
+          0.00970383919775486,
+          0.0036317736376076937
+        ],
+        "revenue": 2.161867141723633,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 27,
+          "samples": 256
+        },
+        "gains": [
+          0.0021273933816701174,
+          0.0036581929307430983
+        ],
+        "revenue": 2.138847827911377,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 28,
+          "samples": 256
+        },
+        "gains": [
+          0.011587100103497505,
+          -0.0011909566819667816
+        ],
+        "revenue": 2.105776309967041,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 29,
+          "samples": 256
+        },
+        "gains": [
+          0.01036764308810234,
+          0.011271812953054905
+        ],
+        "revenue": 2.1634674072265625,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 30,
+          "samples": 256
+        },
+        "gains": [
+          0.015835069119930267,
+          0.00772087974473834
+        ],
+        "revenue": 2.1420249938964844,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      },
+      {
+        "identity": {
+          "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+          "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+          "ic_seed": 93483077,
+          "revenue_seed": 2205434185,
+          "batch_index": 31,
+          "samples": 256
+        },
+        "gains": [
+          0.009913435205817223,
+          0.0056105712428689
+        ],
+        "revenue": 2.1354782581329346,
+        "ir_loss": 0.0,
+        "budget_violation": 0.0,
+        "ir_violation": 0.0
+      }
+    ],
+    "candidate_index": 3,
+    "trial_index": 0,
+    "merge_trace": [
+      {
+        "buyer": 0,
+        "family": "truth",
+        "gain": 0.0
+      },
+      {
+        "buyer": 0,
+        "family": "low",
+        "gain": -0.23766396939754486
+      },
+      {
+        "buyer": 0,
+        "family": "high",
+        "gain": -0.29119873046875
+      },
+      {
+        "buyer": 0,
+        "family": "half",
+        "gain": -0.10194246470928192
+      },
+      {
+        "buyer": 0,
+        "family": "retained",
+        "gain": 0.007087867707014084
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w128_pathwise",
+        "gain": 0.007661045528948307
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w128_npg_mean",
+        "gain": 0.007087867707014084
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w128_npg_stochastic",
+        "gain": 0.0002792427549138665
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w256_pathwise",
+        "gain": 0.006989507935941219
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w256_npg_mean",
+        "gain": 0.006701506674289703
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w256_npg_stochastic",
+        "gain": -1.85928656719625e-05
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w512_pathwise",
+        "gain": 0.007096524350345135
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w512_npg_mean",
+        "gain": 0.007129336707293987
+      },
+      {
+        "buyer": 0,
+        "family": "retained_w512_npg_stochastic",
+        "gain": 0.00030523136956617236
+      },
+      {
+        "buyer": 0,
+        "family": "expanded",
+        "gain": 0.008633590303361416
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w128_pathwise",
+        "gain": 0.00831877626478672
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w128_npg_mean",
+        "gain": 0.008633590303361416
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w128_npg_stochastic",
+        "gain": 0.0010874923318624496
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w256_pathwise",
+        "gain": 0.008378293365240097
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w256_npg_mean",
+        "gain": 0.008242540061473846
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w256_npg_stochastic",
+        "gain": 0.0011152841616421938
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w512_pathwise",
+        "gain": 0.009473636746406555
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w512_npg_mean",
+        "gain": 0.008694669231772423
+      },
+      {
+        "buyer": 0,
+        "family": "expanded_w512_npg_stochastic",
+        "gain": 0.0013353924732655287
+      },
+      {
+        "buyer": 0,
+        "family": "es_restart0",
+        "gain": 0.007604013197124004
+      },
+      {
+        "buyer": 0,
+        "family": "es_restart1",
+        "gain": 0.005004408769309521
+      },
+      {
+        "buyer": 0,
+        "family": "es_restart2",
+        "gain": 0.005191772244870663
+      },
+      {
+        "buyer": 1,
+        "family": "truth",
+        "gain": 0.0
+      },
+      {
+        "buyer": 1,
+        "family": "low",
+        "gain": -0.22659897804260254
+      },
+      {
+        "buyer": 1,
+        "family": "high",
+        "gain": -0.29445070028305054
+      },
+      {
+        "buyer": 1,
+        "family": "half",
+        "gain": -0.08975645899772644
+      },
+      {
+        "buyer": 1,
+        "family": "retained",
+        "gain": 0.010506032034754753
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w128_pathwise",
+        "gain": 0.007234396878629923
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w128_npg_mean",
+        "gain": 0.008504943922162056
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w128_npg_stochastic",
+        "gain": 0.002466469071805477
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w256_pathwise",
+        "gain": 0.009821629151701927
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w256_npg_mean",
+        "gain": 0.010506032034754753
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w256_npg_stochastic",
+        "gain": 0.0045056333765387535
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w512_pathwise",
+        "gain": 0.010635970160365105
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w512_npg_mean",
+        "gain": 0.010594155639410019
+      },
+      {
+        "buyer": 1,
+        "family": "retained_w512_npg_stochastic",
+        "gain": 0.004487149883061647
+      },
+      {
+        "buyer": 1,
+        "family": "expanded",
+        "gain": 0.011483260430395603
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w128_pathwise",
+        "gain": 0.010253006592392921
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w128_npg_mean",
+        "gain": 0.011483260430395603
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w128_npg_stochastic",
+        "gain": 0.0049872370436787605
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w256_pathwise",
+        "gain": 0.01249377429485321
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w256_npg_mean",
+        "gain": 0.012415364384651184
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w256_npg_stochastic",
+        "gain": 0.0062604439444839954
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w512_pathwise",
+        "gain": 0.011539570987224579
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w512_npg_mean",
+        "gain": 0.012155785225331783
+      },
+      {
+        "buyer": 1,
+        "family": "expanded_w512_npg_stochastic",
+        "gain": 0.005839844234287739
+      },
+      {
+        "buyer": 1,
+        "family": "es_restart0",
+        "gain": 0.009627463296055794
+      },
+      {
+        "buyer": 1,
+        "family": "es_restart1",
+        "gain": 0.006434698589146137
+      },
+      {
+        "buyer": 1,
+        "family": "es_restart2",
+        "gain": 0.0072626760229468346
+      }
+    ],
+    "stress_artifact": "candidate_03/stress/merge/selected.pkl"
+  },
+  "attained": false,
+  "regular": [
+    {
+      "candidate_index": 2,
+      "trial_index": 0,
+      "epoch": 500,
+      "target": 2.3,
+      "mechanism_artifact": "target_00/candidate_epoch0500.pkl",
+      "ic_upper": 0.037981219589710236,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 2.1071183681488037,
+        "std": 0.03920590877532959,
+        "se": 0.019602954387664795,
+        "ci95": [
+          2.0686965775489807,
+          2.1455401587486267
+        ],
+        "num_batches": 4,
+        "min": 2.0606675148010254,
+        "max": 2.146296501159668,
+        "median": 2.1107547283172607
+      },
+      "raw_validation_revenue_batches": [
+        2.0606675148010254,
+        2.089632987976074,
+        2.1318764686584473,
+        2.146296501159668
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_02/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 0,
+      "trial_index": 0,
+      "epoch": 750,
+      "target": 2.3,
+      "mechanism_artifact": "target_00/candidate_epoch0750.pkl",
+      "ic_upper": 0.03442905843257904,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 2.1698825359344482,
+        "std": 0.07092554867267609,
+        "se": 0.03546277433633804,
+        "ci95": [
+          2.1003754982352256,
+          2.239389573633671
+        ],
+        "num_batches": 4,
+        "min": 2.0803933143615723,
+        "max": 2.253225803375244,
+        "median": 2.1729555130004883
+      },
+      "raw_validation_revenue_batches": [
+        2.253225803375244,
+        2.1652746200561523,
+        2.180636405944824,
+        2.0803933143615723
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_00/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 3,
+      "trial_index": 0,
+      "epoch": 1000,
+      "target": 2.3,
+      "mechanism_artifact": "target_00/candidate_epoch1000.pkl",
+      "ic_upper": 0.017808157950639725,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 2.1700782775878906,
+        "std": 0.03457159548997879,
+        "se": 0.017285797744989395,
+        "ci95": [
+          2.1361981140077115,
+          2.2039584411680697
+        ],
+        "num_batches": 4,
+        "min": 2.1305484771728516,
+        "max": 2.211308002471924,
+        "median": 2.1692285537719727
+      },
+      "raw_validation_revenue_batches": [
+        2.1819100379943848,
+        2.1305484771728516,
+        2.211308002471924,
+        2.1565468311309814
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_03/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 4,
+      "trial_index": 0,
+      "epoch": 1250,
+      "target": 2.3,
+      "mechanism_artifact": "target_00/candidate_epoch1250.pkl",
+      "ic_upper": 0.018239330500364304,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 2.1296253204345703,
+        "std": 0.006950950715690851,
+        "se": 0.0034754753578454256,
+        "ci95": [
+          2.1228133887331935,
+          2.136437252135947
+        ],
+        "num_batches": 4,
+        "min": 2.1207408905029297,
+        "max": 2.1367430686950684,
+        "median": 2.1305084228515625
+      },
+      "raw_validation_revenue_batches": [
+        2.133134365081787,
+        2.127882242202759,
+        2.1207408905029297,
+        2.1367430686950684
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_04/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 1,
+      "trial_index": 0,
+      "epoch": 1500,
+      "target": 2.3,
+      "mechanism_artifact": "target_00/candidate_epoch1500.pkl",
+      "ic_upper": 0.020335765555500984,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 2.092494487762451,
+        "std": 0.02322937361896038,
+        "se": 0.01161468680948019,
+        "ci95": [
+          2.06972970161587,
+          2.1152592739090323
+        ],
+        "num_batches": 4,
+        "min": 2.0764918327331543,
+        "max": 2.1270065307617188,
+        "median": 2.083240032196045
+      },
+      "raw_validation_revenue_batches": [
+        2.0764918327331543,
+        2.0828211307525635,
+        2.1270065307617188,
+        2.0836586952209473
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_01/regular/selected.pkl"
+    }
+  ],
+  "strong_attempts": [
+    {
+      "ic_upper": 0.019719701260328293,
+      "audit": {
+        "deviation_gain_per_buyer": [
+          0.009477365761995316,
+          0.007740634027868509
+        ],
+        "deviation_se_per_buyer": [
+          0.0006617754115723073,
+          0.0006146266241557896
+        ],
+        "ic_per_buyer": [
+          0.009477365761995316,
+          0.007740634027868509
+        ],
+        "ic_sum": 0.017217999324202538,
+        "ic_mean": 0.008608999662101269,
+        "ic_max_buyer": 0.009477365761995316,
+        "ic_sum_sampling_ucb95": 0.019719701260328293,
+        "evidence_type": "empirical_fixed_policy_audit"
+      },
+      "revenue": {
+        "mean": 2.13419771194458,
+        "std": 0.022969722747802734,
+        "se": 0.004060511679236553,
+        "ci95": [
+          2.1262391090532766,
+          2.1421563148358835
+        ],
+        "num_batches": 32,
+        "min": 2.079822540283203,
+        "max": 2.1827645301818848,
+        "median": 2.134873867034912
+      },
+      "observed_feasible": true,
+      "batches": 32,
+      "samples_per_batch": 256,
+      "ic_threshold": 0.04,
+      "raw_batches": [
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 0,
+            "samples": 256
+          },
+          "gains": [
+            0.010308362543582916,
+            0.007110476493835449
+          ],
+          "revenue": 2.158270835876465,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 1,
+            "samples": 256
+          },
+          "gains": [
+            0.008080331608653069,
+            0.0095339585095644
+          ],
+          "revenue": 2.140760660171509,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 2,
+            "samples": 256
+          },
+          "gains": [
+            0.010097842663526535,
+            0.009558909572660923
+          ],
+          "revenue": 2.136930227279663,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 3,
+            "samples": 256
+          },
+          "gains": [
+            0.008199825882911682,
+            0.013507191091775894
+          ],
+          "revenue": 2.140540838241577,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 4,
+            "samples": 256
+          },
+          "gains": [
+            0.005077863112092018,
+            0.010161852464079857
+          ],
+          "revenue": 2.1598258018493652,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 5,
+            "samples": 256
+          },
+          "gains": [
+            0.009938187897205353,
+            0.009748086333274841
+          ],
+          "revenue": 2.108440399169922,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 6,
+            "samples": 256
+          },
+          "gains": [
+            0.00872873980551958,
+            0.007704392075538635
+          ],
+          "revenue": 2.168300151824951,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 7,
+            "samples": 256
+          },
+          "gains": [
+            0.01836847886443138,
+            0.014618447050452232
+          ],
+          "revenue": 2.1154181957244873,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 8,
+            "samples": 256
+          },
+          "gains": [
+            0.00842167716473341,
+            0.0075909048318862915
+          ],
+          "revenue": 2.125356912612915,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 9,
+            "samples": 256
+          },
+          "gains": [
+            0.006847127340734005,
+            0.006997718010097742
+          ],
+          "revenue": 2.123109817504883,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 10,
+            "samples": 256
+          },
+          "gains": [
+            0.007848447188735008,
+            0.005736644845455885
+          ],
+          "revenue": 2.1194958686828613,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 11,
+            "samples": 256
+          },
+          "gains": [
+            0.005969128105789423,
+            0.0086631178855896
+          ],
+          "revenue": 2.1194190979003906,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 12,
+            "samples": 256
+          },
+          "gains": [
+            0.004869747441262007,
+            0.0073655578307807446
+          ],
+          "revenue": 2.1288094520568848,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 13,
+            "samples": 256
+          },
+          "gains": [
+            0.01036449521780014,
+            0.003065292490646243
+          ],
+          "revenue": 2.1466922760009766,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 14,
+            "samples": 256
+          },
+          "gains": [
+            0.006398345809429884,
+            0.0057462360709905624
+          ],
+          "revenue": 2.1257500648498535,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 15,
+            "samples": 256
+          },
+          "gains": [
+            0.01525360532104969,
+            0.0056389085948467255
+          ],
+          "revenue": 2.1103498935699463,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 16,
+            "samples": 256
+          },
+          "gains": [
+            0.011734980158507824,
+            0.010385298170149326
+          ],
+          "revenue": 2.127498149871826,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 17,
+            "samples": 256
+          },
+          "gains": [
+            0.01800393871963024,
+            0.006602453999221325
+          ],
+          "revenue": 2.1061291694641113,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 18,
+            "samples": 256
+          },
+          "gains": [
+            0.012559184804558754,
+            0.01249439176172018
+          ],
+          "revenue": 2.137742280960083,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 19,
+            "samples": 256
+          },
+          "gains": [
+            0.008913926780223846,
+            0.0035120483953505754
+          ],
+          "revenue": 2.1827645301818848,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 20,
+            "samples": 256
+          },
+          "gains": [
+            0.00936419889330864,
+            0.013956837356090546
+          ],
+          "revenue": 2.079822540283203,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 21,
+            "samples": 256
+          },
+          "gains": [
+            0.006987867411226034,
+            0.005991802550852299
+          ],
+          "revenue": 2.132146120071411,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 22,
+            "samples": 256
+          },
+          "gains": [
+            0.004806975368410349,
+            0.00909197423607111
+          ],
+          "revenue": 2.177384853363037,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 23,
+            "samples": 256
+          },
+          "gains": [
+            0.0130260419100523,
+            0.004374242853373289
+          ],
+          "revenue": 2.1052277088165283,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 24,
+            "samples": 256
+          },
+          "gains": [
+            0.007011623587459326,
+            0.00737196858972311
+          ],
+          "revenue": 2.1342692375183105,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 25,
+            "samples": 256
+          },
+          "gains": [
+            0.0065602525137364864,
+            0.01046931091696024
+          ],
+          "revenue": 2.136408805847168,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 26,
+            "samples": 256
+          },
+          "gains": [
+            0.00970383919775486,
+            0.0036317736376076937
+          ],
+          "revenue": 2.161867141723633,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 27,
+            "samples": 256
+          },
+          "gains": [
+            0.0021273933816701174,
+            0.0036581929307430983
+          ],
+          "revenue": 2.138847827911377,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 28,
+            "samples": 256
+          },
+          "gains": [
+            0.011587100103497505,
+            -0.0011909566819667816
+          ],
+          "revenue": 2.105776309967041,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 29,
+            "samples": 256
+          },
+          "gains": [
+            0.01036764308810234,
+            0.011271812953054905
+          ],
+          "revenue": 2.1634674072265625,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 30,
+            "samples": 256
+          },
+          "gains": [
+            0.015835069119930267,
+            0.00772087974473834
+          ],
+          "revenue": 2.1420249938964844,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        },
+        {
+          "identity": {
+            "search_identity": "217600948d137b9e0ae037518535d80d60551a5971c9f5dcd6164d74f5149ced",
+            "policy_sha256": "b12e3da0269254b3c7c108da89e178d8a4251787f0a5130f0bdc786260e15858",
+            "ic_seed": 93483077,
+            "revenue_seed": 2205434185,
+            "batch_index": 31,
+            "samples": 256
+          },
+          "gains": [
+            0.009913435205817223,
+            0.0056105712428689
+          ],
+          "revenue": 2.1354782581329346,
+          "ir_loss": 0.0,
+          "budget_violation": 0.0,
+          "ir_violation": 0.0
+        }
+      ],
+      "candidate_index": 3,
+      "trial_index": 0,
+      "merge_trace": [
+        {
+          "buyer": 0,
+          "family": "truth",
+          "gain": 0.0
+        },
+        {
+          "buyer": 0,
+          "family": "low",
+          "gain": -0.23766396939754486
+        },
+        {
+          "buyer": 0,
+          "family": "high",
+          "gain": -0.29119873046875
+        },
+        {
+          "buyer": 0,
+          "family": "half",
+          "gain": -0.10194246470928192
+        },
+        {
+          "buyer": 0,
+          "family": "retained",
+          "gain": 0.007087867707014084
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w128_pathwise",
+          "gain": 0.007661045528948307
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w128_npg_mean",
+          "gain": 0.007087867707014084
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w128_npg_stochastic",
+          "gain": 0.0002792427549138665
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w256_pathwise",
+          "gain": 0.006989507935941219
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w256_npg_mean",
+          "gain": 0.006701506674289703
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w256_npg_stochastic",
+          "gain": -1.85928656719625e-05
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w512_pathwise",
+          "gain": 0.007096524350345135
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w512_npg_mean",
+          "gain": 0.007129336707293987
+        },
+        {
+          "buyer": 0,
+          "family": "retained_w512_npg_stochastic",
+          "gain": 0.00030523136956617236
+        },
+        {
+          "buyer": 0,
+          "family": "expanded",
+          "gain": 0.008633590303361416
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w128_pathwise",
+          "gain": 0.00831877626478672
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w128_npg_mean",
+          "gain": 0.008633590303361416
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w128_npg_stochastic",
+          "gain": 0.0010874923318624496
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w256_pathwise",
+          "gain": 0.008378293365240097
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w256_npg_mean",
+          "gain": 0.008242540061473846
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w256_npg_stochastic",
+          "gain": 0.0011152841616421938
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w512_pathwise",
+          "gain": 0.009473636746406555
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w512_npg_mean",
+          "gain": 0.008694669231772423
+        },
+        {
+          "buyer": 0,
+          "family": "expanded_w512_npg_stochastic",
+          "gain": 0.0013353924732655287
+        },
+        {
+          "buyer": 0,
+          "family": "es_restart0",
+          "gain": 0.007604013197124004
+        },
+        {
+          "buyer": 0,
+          "family": "es_restart1",
+          "gain": 0.005004408769309521
+        },
+        {
+          "buyer": 0,
+          "family": "es_restart2",
+          "gain": 0.005191772244870663
+        },
+        {
+          "buyer": 1,
+          "family": "truth",
+          "gain": 0.0
+        },
+        {
+          "buyer": 1,
+          "family": "low",
+          "gain": -0.22659897804260254
+        },
+        {
+          "buyer": 1,
+          "family": "high",
+          "gain": -0.29445070028305054
+        },
+        {
+          "buyer": 1,
+          "family": "half",
+          "gain": -0.08975645899772644
+        },
+        {
+          "buyer": 1,
+          "family": "retained",
+          "gain": 0.010506032034754753
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w128_pathwise",
+          "gain": 0.007234396878629923
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w128_npg_mean",
+          "gain": 0.008504943922162056
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w128_npg_stochastic",
+          "gain": 0.002466469071805477
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w256_pathwise",
+          "gain": 0.009821629151701927
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w256_npg_mean",
+          "gain": 0.010506032034754753
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w256_npg_stochastic",
+          "gain": 0.0045056333765387535
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w512_pathwise",
+          "gain": 0.010635970160365105
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w512_npg_mean",
+          "gain": 0.010594155639410019
+        },
+        {
+          "buyer": 1,
+          "family": "retained_w512_npg_stochastic",
+          "gain": 0.004487149883061647
+        },
+        {
+          "buyer": 1,
+          "family": "expanded",
+          "gain": 0.011483260430395603
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w128_pathwise",
+          "gain": 0.010253006592392921
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w128_npg_mean",
+          "gain": 0.011483260430395603
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w128_npg_stochastic",
+          "gain": 0.0049872370436787605
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w256_pathwise",
+          "gain": 0.01249377429485321
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w256_npg_mean",
+          "gain": 0.012415364384651184
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w256_npg_stochastic",
+          "gain": 0.0062604439444839954
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w512_pathwise",
+          "gain": 0.011539570987224579
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w512_npg_mean",
+          "gain": 0.012155785225331783
+        },
+        {
+          "buyer": 1,
+          "family": "expanded_w512_npg_stochastic",
+          "gain": 0.005839844234287739
+        },
+        {
+          "buyer": 1,
+          "family": "es_restart0",
+          "gain": 0.009627463296055794
+        },
+        {
+          "buyer": 1,
+          "family": "es_restart1",
+          "gain": 0.006434698589146137
+        },
+        {
+          "buyer": 1,
+          "family": "es_restart2",
+          "gain": 0.0072626760229468346
+        }
+      ],
+      "stress_artifact": "candidate_03/stress/merge/selected.pkl"
+    }
+  ],
+  "screen_ranking": [
+    3,
+    0,
+    4,
+    2,
+    1
+  ],
+  "final": null,
+  "independent_final_tests": 0,
+  "cold_start": true,
+  "epochs": 1500,
+  "selection_mode": "reselect",
+  "checkpoint_epochs": [
+    500,
+    750,
+    1000,
+    1250,
+    1500
+  ],
+  "phase": "capacity_matched_five_checkpoint_selection",
+  "claim": "Finite adaptive validation selection; not certified IC, optimality or infeasibility"
+}

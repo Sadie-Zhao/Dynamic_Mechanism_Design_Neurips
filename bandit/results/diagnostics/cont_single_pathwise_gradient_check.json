@@ -1,0 +1,63 @@
+{
+  "role": "derivative_diagnostic_no_optimization",
+  "setting": "single",
+  "samples": 64,
+  "seeds": [
+    83001,
+    83002,
+    83003
+  ],
+  "oracle": "m1/gru/hidden128/residual_init_std0.1",
+  "forward_value_preserved": -0.008609463460743427,
+  "forward_value_full_derivative": -0.008609463460743427,
+  "old_gradient_norm": 0.35261353850364685,
+  "full_gradient_norm": 0.35041728615760803,
+  "gradient_difference_norm": 0.0023889951407909393,
+  "direction": "normalized old-minus-full gradient; evaluated without an optimization update",
+  "preserved_directional_derivative": 0.3243511915206909,
+  "full_directional_derivative": 0.3219618499279022,
+  "finite_differences": [
+    {
+      "epsilon": 0.01,
+      "central_difference": 0.31193652749061584
+    },
+    {
+      "epsilon": 0.003,
+      "central_difference": 0.31803378462791443
+    },
+    {
+      "epsilon": 0.001,
+      "central_difference": 0.32097890973091125
+    },
+    {
+      "epsilon": 0.0003,
+      "central_difference": 0.32145994901657104
+    }
+  ],
+  "jax": "0.4.38",
+  "devices": [
+    "TFRT_CPU_0"
+  ],
+  "environment": {
+    "seed": 42,
+    "n_buyers": 2,
+    "n_goods": 1,
+    "horizon": 5,
+    "discount": 0.9,
+    "type_mean": 2.5,
+    "type_std": 0.1,
+    "types_low": 0.0,
+    "types_high": 5.0,
+    "allocation_cost": 0.1,
+    "sigma_no": 0.0,
+    "trans_lambda": 3.0
+  },
+  "source_sha256": {
+    "audit/cont_oracle.py": "0e8bfa8a612706fc809176b0a9abf1f105ab08a4359f05a1268240b8acf90aeb",
+    "audit/cont_rollout.py": "64f02c754680ce3f9bb0b0466a9c5052e8393cb8cff09914aa2989387d9cb52c",
+    "bandit_auction/core.py": "42f519b128cc1e5e76655b749843ccd26f27abc1ad35b6896700ed106c245926"
+  },
+  "mechanism_sha256": "59aaa741c3ebe1d1b05bf65efb36552d79524cbfe688dce6fc12af6a299a39ed",
+  "verification_script_sha256": "5e00bf383f71894f72d96ed43438f115806c5d59dbad48decaf4aaef41f221d6",
+  "limitations": "Checks the derivative at one fixed policy and fixed sample stream; does not establish the size or direction of the error in the original optimized regrets. NPG/ES derivative estimators are separate."
+}

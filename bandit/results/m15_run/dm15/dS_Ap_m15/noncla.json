@@ -1,0 +1,70 @@
+{
+  "experiment": "discrete_single",
+  "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+  "jax": "0.4.28",
+  "K": 3,
+  "T": 5,
+  "gamma": 0.9,
+  "type_vals": [
+    1.0,
+    2.0,
+    3.0
+  ],
+  "env_kwargs": {
+    "seed": 42
+  },
+  "learned_oracle_recorded": {
+    "regret_reopt": -0.023337922990322113,
+    "regret_eval": -0.07913465797901154,
+    "final_eval_regret_mean": null,
+    "final_reg_train": null,
+    "revenue_eval": 7.704044342041016,
+    "best_epoch": 1600
+  },
+  "adversary": "clairvoyant (sound UPPER bound on true exploitability)",
+  "noncla_note": "non-clairvoyant = true IMPLEMENTABLE worst-case, exact because submitted reports are public (report_history is public mechanism state) so the opponent's past types are observed and the one-step belief over its current type is exact",
+  "buyer0": {
+    "BR_value": 1.1325539350509644,
+    "truthful_value": 0.8790415525436401,
+    "exact_regret": 0.2535123825073242,
+    "I1_nonneg_ok": true,
+    "best_memoryless_value": 0.8790415525436401,
+    "best_memoryless_regret": 0.0,
+    "best_memoryless_map": [
+      0,
+      1,
+      2
+    ],
+    "noncla_BR_value": 0.9660580158233643,
+    "noncla_regret": 0.08701646327972412,
+    "noncla_bracket_ok": true
+  },
+  "buyer1": {
+    "BR_value": 1.1325539350509644,
+    "truthful_value": 0.8790415525436401,
+    "exact_regret": 0.2535123825073242,
+    "I1_nonneg_ok": true,
+    "best_memoryless_value": 0.8790415525436401,
+    "best_memoryless_regret": 0.0,
+    "best_memoryless_map": [
+      0,
+      1,
+      2
+    ],
+    "noncla_BR_value": 0.9660580158233643,
+    "noncla_regret": 0.08701646327972412,
+    "noncla_bracket_ok": true
+  },
+  "exact_regret_sum_over_buyers": 0.5070247650146484,
+  "exact_regret_max_over_buyers": 0.2535123825073242,
+  "symmetry_gap": 0.0,
+  "best_memoryless_regret_sum": 0.0,
+  "best_memoryless_regret_max": 0.0,
+  "noncla_regret_sum": 0.17403292655944824,
+  "noncla_regret_max": 0.08701646327972412,
+  "mc_truthful_reward_per_buyer": [
+    0.8838204741477966,
+    0.8744246959686279
+  ],
+  "truthful_crosscheck_gap_buyer0": 0.004778921604156494
+}

@@ -1,0 +1,47 @@
+{
+  "experiment": "cont_multi",
+  "oracle": "ES-m1-mlp",
+  "info": "m1",
+  "arch": "mlp",
+  "run_dir": "outputs/cont_multi/ckpt_best",
+  "sigma": 0.05,
+  "popsize": 128,
+  "gens": 300,
+  "best_regret_per_buyer": 0.0003606841492000967,
+  "per_restart": [
+    {
+      "restart": 0,
+      "heldout_per_buyer": 4.9902395403478295e-05
+    },
+    {
+      "restart": 1,
+      "heldout_per_buyer": 4.592669938574545e-05
+    },
+    {
+      "restart": 2,
+      "heldout_per_buyer": 0.00013781939924228936
+    },
+    {
+      "restart": 3,
+      "heldout_per_buyer": 0.0003606841492000967
+    }
+  ],
+  "config": {
+    "run_dir": "outputs/cont_multi/ckpt_best",
+    "out": "/home/ubuntu/cdmd/results/cont_corner/cont_multi/es_m1_mlp.json",
+    "env": "multi",
+    "info": "m1",
+    "arch": "mlp",
+    "hidden": 128,
+    "gens": 300,
+    "pophalf": 64,
+    "sigma": 0.05,
+    "lr": 0.02,
+    "restarts": 4,
+    "samples": 128,
+    "eval_samples": 20000,
+    "eval_every": 15,
+    "seed": 42
+  },
+  "note": "continuous OpenAI-ES (gradient-free, antithetic + centered-rank shaping); PER BUYER"
+}

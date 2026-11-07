@@ -1,1 +1,0 @@
-# Budget Auction experiments package

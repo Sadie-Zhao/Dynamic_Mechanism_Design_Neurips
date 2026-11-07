@@ -1,0 +1,83 @@
+{
+  "experiment": "cont_multi",
+  "oracle": "NPG-m1-gru",
+  "info": "m1",
+  "arch": "gru",
+  "run_dir": "outputs/cont_multi/ckpt_best",
+  "deviator": 0,
+  "sigma": 0.3,
+  "eta": 1.0,
+  "lam": 0.1,
+  "best_regret_per_buyer": 0.002118414733558893,
+  "per_restart": [
+    {
+      "restart": 0,
+      "eval_regret_per_buyer": 0.0014775785384699702
+    },
+    {
+      "restart": 1,
+      "eval_regret_per_buyer": 0.0014402972301468253
+    },
+    {
+      "restart": 2,
+      "eval_regret_per_buyer": 0.0019757209811359644
+    },
+    {
+      "restart": 3,
+      "eval_regret_per_buyer": 0.002027839422225952
+    },
+    {
+      "restart": 4,
+      "eval_regret_per_buyer": 0.0014819044154137373
+    },
+    {
+      "restart": 5,
+      "eval_regret_per_buyer": 0.0016084800008684397
+    },
+    {
+      "restart": 6,
+      "eval_regret_per_buyer": 0.0013455379521474242
+    },
+    {
+      "restart": 7,
+      "eval_regret_per_buyer": 0.0013086326653137803
+    },
+    {
+      "restart": 8,
+      "eval_regret_per_buyer": 0.0010235068621113896
+    },
+    {
+      "restart": 9,
+      "eval_regret_per_buyer": 0.0010696012759581208
+    },
+    {
+      "restart": 10,
+      "eval_regret_per_buyer": 0.0012725259875878692
+    },
+    {
+      "restart": 11,
+      "eval_regret_per_buyer": 0.002118414733558893
+    }
+  ],
+  "config": {
+    "run_dir": "outputs/cont_multi/ckpt_best",
+    "out": "/home/ubuntu/cdmd/results/cont_corner/cont_multi/npgceil_m1_gru.json",
+    "env": "multi",
+    "info": "m1",
+    "arch": "gru",
+    "deviator": 0,
+    "hidden": 128,
+    "sigma": 0.3,
+    "iters": 600,
+    "restarts": 12,
+    "episodes": 1024,
+    "eval_episodes": 20000,
+    "eval_mid": 4000,
+    "eval_every": 30,
+    "eta": 1.0,
+    "lam": 0.1,
+    "kl": 0.02,
+    "seed": 42
+  },
+  "note": "continuous NPG (score-fn, Gaussian-in-logit), exact Woodbury Fisher solve; PER BUYER"
+}

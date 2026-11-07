@@ -1,0 +1,231 @@
+{
+  "identity": {
+    "config": {
+      "phase": "diagnostic_not_replacement_for_rebuttal",
+      "purpose": "Short corrected pathwise search on the saved mechanism, preserving the original winning M2/wide forward class and adding separate buyer selection and independent evaluation",
+      "setting": "single",
+      "arch": "wide",
+      "info": "m2",
+      "hidden": 128,
+      "steps": 300,
+      "restarts": 2,
+      "eval_every": 25,
+      "lr": 0.0005,
+      "samples": 64,
+      "validation_samples": 512,
+      "final_batches": 32,
+      "final_samples": 256,
+      "seed": 8326026,
+      "evaluation_seed": 8426026
+    },
+    "environment": {
+      "seed": 42,
+      "n_buyers": 2,
+      "n_goods": 1,
+      "horizon": 5,
+      "discount": 0.9,
+      "type_mean": 2.5,
+      "type_std": 0.1,
+      "types_low": 0.0,
+      "types_high": 5.0,
+      "allocation_cost": 0.1,
+      "sigma_no": 0.0,
+      "trans_lambda": 3.0
+    },
+    "config_sha256": "2654e0555be014d5fe6b9bb78ff40f12c481161bfa467c9c935a190f64dac794",
+    "source_sha256": {
+      "bandit_auction/__init__.py": "a931097f585377965705a4dc97b63487520df2acdb5307accf4c3171165d0970",
+      "bandit_auction/baselines/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bandit_auction/baselines/pavan.py": "8b770c0ee1d3023976815b72703af3a3ef8063caeb02669572c2c3999ddaef63",
+      "bandit_auction/core.py": "42f519b128cc1e5e76655b749843ccd26f27abc1ad35b6896700ed106c245926",
+      "bandit_auction/envs/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bandit_auction/envs/cont_multi.py": "618d25a9ce50c0e71e226eabb42491740a974cddbda387aff9a39a92f6e7526e",
+      "bandit_auction/envs/cont_single.py": "9bd7e7e01d9cc67eb7eae5baf52ede7d140eb1043a7c1afb6c6a4eeda636214a",
+      "bandit_auction/envs/discrete_multi.py": "5d326c564d176e453104fb16fd76f0ca2c26b01d2e8b8db81aae55125363943d",
+      "bandit_auction/envs/discrete_single.py": "c596fdd779379f8d3bca5454a4282d0f0ec4674a5e8f5aa8cb84714dcdb6b601",
+      "bandit_auction/mechanisms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bandit_auction/mechanisms/network.py": "fab53462766471cc7c3fe9e3c09d6da1137538c563ad3541adb038478e86562b",
+      "bandit_auction/train/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bandit_auction/train/binary_search.py": "4e35329baed9d1560a17197af559adc045186848a194444b5ce53b40dcf382ee",
+      "bandit_auction/train/evaluate.py": "94c934d94bc1b03e7723347b7b15eafce901abbcb9648404704675976a0d5038",
+      "bandit_auction/train/run_acceptance.py": "a408395bafa0ce70f6552f9a3b8edd8721c2ef00eea17bbbe02fafb6f39cf252",
+      "bandit_auction/train/run_penalty.py": "6fcb056706912f5736db0df201719a32b6587d55a6f25773aff2e95b3970e1d0",
+      "audit/cont_cfg.py": "85b386fbc1978a66b00d195594c42cce59497073038ef5a025766a339139400c",
+      "audit/cont_oracle.py": "0e8bfa8a612706fc809176b0a9abf1f105ab08a4359f05a1268240b8acf90aeb",
+      "audit/cont_pathwise_corrected.py": "467764c03490f7839a6d8f146253e1839b030a51c30a663f310c33cd9b5876ec"
+    },
+    "inputs_sha256": {
+      "mechanism_params.pkl": "59aaa741c3ebe1d1b05bf65efb36552d79524cbfe688dce6fc12af6a299a39ed",
+      "config.yaml": "7c7adace81671fce6ca45a3697bdbbeb3ff0d1503eecf8cf454aae1d2247c238"
+    },
+    "packages": {
+      "jax": "0.4.38",
+      "jaxlib": "0.4.38",
+      "dm-haiku": "0.0.13",
+      "flax": "0.10.2",
+      "optax": "0.2.4",
+      "numpy": "1.26.4"
+    }
+  },
+  "role": "independent_test_of_frozen_corrected_pathwise_policies",
+  "phase": "diagnostic_not_replacement_for_rebuttal",
+  "gains_by_batch": [
+    [
+      0.0005975974490866065,
+      0.0005189349176362157
+    ],
+    [
+      0.0005073072388768196,
+      0.0005330527201294899
+    ],
+    [
+      0.0008015097118914127,
+      0.0004475250607356429
+    ],
+    [
+      0.0006701002130284905,
+      0.00047990199527703226
+    ],
+    [
+      0.0005174853140488267,
+      0.000465049350168556
+    ],
+    [
+      0.00024146710347849876,
+      0.0005459457752294838
+    ],
+    [
+      0.0006364429136738181,
+      0.0006632580189034343
+    ],
+    [
+      0.0007151641766540706,
+      0.0007139905355870724
+    ],
+    [
+      0.0004822200571652502,
+      0.0002930013579316437
+    ],
+    [
+      0.0005331658758223057,
+      0.0005976422689855099
+    ],
+    [
+      0.0006301219691522419,
+      0.0009339634561911225
+    ],
+    [
+      0.00014877552166581154,
+      0.00040719113894738257
+    ],
+    [
+      0.0002560693246778101,
+      0.0005850560846738517
+    ],
+    [
+      0.00013943490921519697,
+      0.00036054477095603943
+    ],
+    [
+      0.00042747214320115745,
+      0.00027758325450122356
+    ],
+    [
+      0.00029681253363378346,
+      0.0003335676738061011
+    ],
+    [
+      0.000658686098176986,
+      0.0005983017617836595
+    ],
+    [
+      0.00043937499867752194,
+      0.0007566848653368652
+    ],
+    [
+      0.0005104021402075887,
+      0.0004801600007340312
+    ],
+    [
+      0.0005685747019015253,
+      0.0006573650753125548
+    ],
+    [
+      0.00042246407247148454,
+      0.0004269591881893575
+    ],
+    [
+      0.0002215345884906128,
+      0.00045641695032827556
+    ],
+    [
+      0.0005080849514342844,
+      0.0004908048431389034
+    ],
+    [
+      0.0004642140120267868,
+      0.00011846463894471526
+    ],
+    [
+      0.0004907085094600916,
+      0.0004514546599239111
+    ],
+    [
+      0.000605708104558289,
+      0.0004664197622332722
+    ],
+    [
+      0.0007494646706618369,
+      0.0008694209391251206
+    ],
+    [
+      0.0002735193120315671,
+      0.000644856016151607
+    ],
+    [
+      0.000498513167258352,
+      0.0005944211152382195
+    ],
+    [
+      0.0003829631023108959,
+      0.000519042310770601
+    ],
+    [
+      0.00010850951366592199,
+      0.0002837449428625405
+    ],
+    [
+      0.0003790499467868358,
+      0.0007709076744504273
+    ]
+  ],
+  "gain_per_buyer": [
+    0.0004650911982935213,
+    0.0005231760351307457
+  ],
+  "se_per_buyer": [
+    3.2147464569877145e-05,
+    3.11140609213522e-05
+  ],
+  "signed_buyer_mean_gain": 0.0004941336167121335,
+  "positive_gain_sum": 0.000988267233424267,
+  "positive_gain_mean": 0.0004941336167121335,
+  "positive_gain_max_buyer": 0.0005231760351307457,
+  "gain_sampling_upper_per_buyer": [
+    0.0005280990710447579,
+    0.0005841584739493811
+  ],
+  "selected_modes": [
+    "network",
+    "network"
+  ],
+  "selected_validation_gains": [
+    0.0005892500630579889,
+    0.0005718988250009716
+  ],
+  "seconds_this_invocation": 70.15416979999281,
+  "devices": [
+    "TFRT_CPU_0"
+  ],
+  "claim": "Additional empirical pathwise search, not a global IC certificate or replacement of the original ladder. Sampling bounds do not cover missed deviations. Rebuttal values remain unchanged."
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "goal": 15.25,
+    "dir": "outputs_audit/dM_B_m2/goal_15.250",
+    "revenue_eval": 15.528463363647461,
+    "regret_reopt": -0.07161207497119904,
+    "regret_eval": -0.05134844034910202,
+    "feasible": false
+  }
+]

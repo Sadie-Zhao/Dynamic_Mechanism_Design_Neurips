@@ -1,0 +1,78 @@
+[
+  {
+    "buyer": 0,
+    "selected": "restart0/step300",
+    "mode": "network",
+    "validation_gain": 0.007072935812175274,
+    "candidates": [
+      {
+        "mode": "truth",
+        "validation_gain": 0.0,
+        "label": "truth"
+      },
+      {
+        "mode": "low",
+        "validation_gain": -2.025144100189209,
+        "label": "low"
+      },
+      {
+        "mode": "high",
+        "validation_gain": -0.9245522022247314,
+        "label": "high"
+      },
+      {
+        "mode": "half",
+        "validation_gain": -0.5417439341545105,
+        "label": "half"
+      },
+      {
+        "mode": "network",
+        "validation_gain": 0.007072935812175274,
+        "label": "restart0/step300"
+      },
+      {
+        "mode": "network",
+        "validation_gain": 0.006722684949636459,
+        "label": "restart1/step275"
+      }
+    ]
+  },
+  {
+    "buyer": 1,
+    "selected": "restart0/step300",
+    "mode": "network",
+    "validation_gain": 0.007875966839492321,
+    "candidates": [
+      {
+        "mode": "truth",
+        "validation_gain": 0.0,
+        "label": "truth"
+      },
+      {
+        "mode": "low",
+        "validation_gain": -2.062403678894043,
+        "label": "low"
+      },
+      {
+        "mode": "high",
+        "validation_gain": -0.8733307719230652,
+        "label": "high"
+      },
+      {
+        "mode": "half",
+        "validation_gain": -0.561288595199585,
+        "label": "half"
+      },
+      {
+        "mode": "network",
+        "validation_gain": 0.007875966839492321,
+        "label": "restart0/step300"
+      },
+      {
+        "mode": "network",
+        "validation_gain": 0.007694219704717398,
+        "label": "restart1/step275"
+      }
+    ]
+  }
+]

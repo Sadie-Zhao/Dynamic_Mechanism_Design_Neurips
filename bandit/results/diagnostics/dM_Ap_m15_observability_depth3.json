@@ -1,0 +1,218 @@
+{
+  "checkpoint": "mechanisms/discrete/dM_Ap_m15/goal_15.250",
+  "mechanism_sha256": "816e024b2fc61aa2e3e98d424c3a0afd024c17f5a72b2116bd789c81862d94e3",
+  "verification_script_sha256": "adf1142baec818da52f3959d2ac0a726a690ca4ef4c43386bb434839c3fbbd0e",
+  "jax": "0.4.38",
+  "devices": [
+    "TFRT_CPU_0"
+  ],
+  "horizon": 5,
+  "enumerated_depth": 3,
+  "evaluations": 538083,
+  "covers_all_discrete_report_histories": false,
+  "separated_above_tolerance": true,
+  "tolerance": 1e-06,
+  "levels": [
+    {
+      "time": 0,
+      "prefixes": 1,
+      "evaluations": 81,
+      "minimum_public_outcome_separation_per_buyer": [
+        0.13232553005218506,
+        0.13232553005218506
+      ],
+      "smallest_separation_witnesses": [
+        {
+          "history": [],
+          "own_report": [
+            1.0,
+            3.0
+          ],
+          "opponent_reports": [
+            [
+              3.0,
+              1.0
+            ],
+            [
+              3.0,
+              2.0
+            ]
+          ]
+        },
+        {
+          "history": [],
+          "own_report": [
+            1.0,
+            3.0
+          ],
+          "opponent_reports": [
+            [
+              3.0,
+              1.0
+            ],
+            [
+              3.0,
+              2.0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "prefixes": 81,
+      "evaluations": 6561,
+      "minimum_public_outcome_separation_per_buyer": [
+        0.00696516502648592,
+        0.006965165957808495
+      ],
+      "smallest_separation_witnesses": [
+        {
+          "history": [
+            [
+              [
+                3.0,
+                2.0
+              ],
+              [
+                3.0,
+                2.0
+              ]
+            ]
+          ],
+          "own_report": [
+            3.0,
+            1.0
+          ],
+          "opponent_reports": [
+            [
+              1.0,
+              3.0
+            ],
+            [
+              2.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "history": [
+            [
+              [
+                3.0,
+                2.0
+              ],
+              [
+                3.0,
+                2.0
+              ]
+            ]
+          ],
+          "own_report": [
+            3.0,
+            1.0
+          ],
+          "opponent_reports": [
+            [
+              1.0,
+              3.0
+            ],
+            [
+              2.0,
+              3.0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "time": 2,
+      "prefixes": 6561,
+      "evaluations": 531441,
+      "minimum_public_outcome_separation_per_buyer": [
+        0.0021860285196453333,
+        0.002186027355492115
+      ],
+      "smallest_separation_witnesses": [
+        {
+          "history": [
+            [
+              [
+                3.0,
+                2.0
+              ],
+              [
+                3.0,
+                3.0
+              ]
+            ],
+            [
+              [
+                3.0,
+                1.0
+              ],
+              [
+                3.0,
+                3.0
+              ]
+            ]
+          ],
+          "own_report": [
+            1.0,
+            3.0
+          ],
+          "opponent_reports": [
+            [
+              3.0,
+              1.0
+            ],
+            [
+              3.0,
+              2.0
+            ]
+          ]
+        },
+        {
+          "history": [
+            [
+              [
+                3.0,
+                3.0
+              ],
+              [
+                3.0,
+                2.0
+              ]
+            ],
+            [
+              [
+                3.0,
+                3.0
+              ],
+              [
+                3.0,
+                1.0
+              ]
+            ]
+          ],
+          "own_report": [
+            1.0,
+            3.0
+          ],
+          "opponent_reports": [
+            [
+              3.0,
+              1.0
+            ],
+            [
+              3.0,
+              2.0
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "seconds": 1.792674099910073,
+  "interpretation": "Finite-precision report-grid observability check; no retraining or regret optimization. Full-depth separation supports inductive report reconstruction from public allocations and payments, conditional on the declared discrete report space."
+}

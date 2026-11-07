@@ -1,0 +1,79 @@
+{
+  "experiment": "discrete_multi",
+  "input": "m15",
+  "oracle": "belief_conditioned_npg",
+  "run_dir": "outputs_audit/dM_B_m2/goal_15.250",
+  "deviator": 0,
+  "recorded": {
+    "regret_reopt": -0.07161207497119904,
+    "regret_eval": -0.05134844034910202
+  },
+  "config": {
+    "run_dir": "outputs_audit/dM_B_m2/goal_15.250",
+    "out": "/home/ubuntu/cdmd/results/dm15/dM_B_m2/npgceil_m15.json",
+    "seed": 42,
+    "deviator": 0,
+    "hidden": 32,
+    "restarts": 12,
+    "iters": 500,
+    "episodes": 1024,
+    "eta": 0.3,
+    "lam": 0.001,
+    "eval_episodes": 20000,
+    "belief": "faithful",
+    "input": "m15",
+    "env": "multi"
+  },
+  "restarts": [
+    {
+      "restart": 0,
+      "eval_regret_per_buyer": 0.06548499315977097
+    },
+    {
+      "restart": 1,
+      "eval_regret_per_buyer": 0.06834319978952408
+    },
+    {
+      "restart": 2,
+      "eval_regret_per_buyer": 0.0675172507762909
+    },
+    {
+      "restart": 3,
+      "eval_regret_per_buyer": 0.07220834493637085
+    },
+    {
+      "restart": 4,
+      "eval_regret_per_buyer": 0.06678713113069534
+    },
+    {
+      "restart": 5,
+      "eval_regret_per_buyer": 0.06891268491744995
+    },
+    {
+      "restart": 6,
+      "eval_regret_per_buyer": 0.06782278418540955
+    },
+    {
+      "restart": 7,
+      "eval_regret_per_buyer": 0.06794106215238571
+    },
+    {
+      "restart": 8,
+      "eval_regret_per_buyer": 0.06877733767032623
+    },
+    {
+      "restart": 9,
+      "eval_regret_per_buyer": 0.06244732439517975
+    },
+    {
+      "restart": 10,
+      "eval_regret_per_buyer": 0.06306968629360199
+    },
+    {
+      "restart": 11,
+      "eval_regret_per_buyer": 0.06719613820314407
+    }
+  ],
+  "best_regret_per_buyer": 0.07220834493637085,
+  "note": "belief-conditioned NPG (score-function), input=m15 (M1.5), env=multi, belief=faithful. (multi-good: single-good ladder bounds do not apply.)"
+}

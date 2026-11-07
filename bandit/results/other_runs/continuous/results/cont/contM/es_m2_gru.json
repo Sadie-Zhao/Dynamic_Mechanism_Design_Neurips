@@ -1,0 +1,47 @@
+{
+  "experiment": "cont_multi",
+  "oracle": "ES-m2-gru",
+  "info": "m2",
+  "arch": "gru",
+  "run_dir": "outputs/cont_multi/ckpt_best",
+  "sigma": 0.05,
+  "popsize": 128,
+  "gens": 300,
+  "best_regret_per_buyer": 6.027435665600933e-05,
+  "per_restart": [
+    {
+      "restart": 0,
+      "heldout_per_buyer": 6.027435665600933e-05
+    },
+    {
+      "restart": 1,
+      "heldout_per_buyer": 2.683126254510171e-08
+    },
+    {
+      "restart": 2,
+      "heldout_per_buyer": 2.683126254510171e-08
+    },
+    {
+      "restart": 3,
+      "heldout_per_buyer": 5.412655809777789e-05
+    }
+  ],
+  "config": {
+    "run_dir": "outputs/cont_multi/ckpt_best",
+    "out": "results/cont/contM/es_m2_gru.json",
+    "env": "multi",
+    "info": "m2",
+    "arch": "gru",
+    "hidden": 128,
+    "gens": 300,
+    "pophalf": 64,
+    "sigma": 0.05,
+    "lr": 0.02,
+    "restarts": 4,
+    "samples": 128,
+    "eval_samples": 20000,
+    "eval_every": 15,
+    "seed": 42
+  },
+  "note": "continuous OpenAI-ES (gradient-free, antithetic + centered-rank shaping); PER BUYER"
+}

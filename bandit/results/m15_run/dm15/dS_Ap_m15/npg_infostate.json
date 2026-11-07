@@ -1,0 +1,55 @@
+{
+  "experiment": "discrete_single",
+  "input": "infostate",
+  "oracle": "belief_conditioned_npg",
+  "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+  "deviator": 0,
+  "recorded": {
+    "regret_reopt": -0.023337922990322113,
+    "regret_eval": -0.07913465797901154
+  },
+  "config": {
+    "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+    "out": "/home/ubuntu/cdmd/results/dm15/dS_Ap_m15/npg_infostate.json",
+    "seed": 42,
+    "deviator": 0,
+    "hidden": 32,
+    "restarts": 6,
+    "iters": 300,
+    "episodes": 512,
+    "eta": 0.3,
+    "lam": 0.001,
+    "eval_episodes": 20000,
+    "belief": "faithful",
+    "input": "infostate",
+    "env": "single"
+  },
+  "restarts": [
+    {
+      "restart": 0,
+      "eval_regret_per_buyer": 0.07513592392206192
+    },
+    {
+      "restart": 1,
+      "eval_regret_per_buyer": 0.07660229504108429
+    },
+    {
+      "restart": 2,
+      "eval_regret_per_buyer": 0.07106973975896835
+    },
+    {
+      "restart": 3,
+      "eval_regret_per_buyer": 0.07735540717840195
+    },
+    {
+      "restart": 4,
+      "eval_regret_per_buyer": 0.07590162754058838
+    },
+    {
+      "restart": 5,
+      "eval_regret_per_buyer": 0.079165980219841
+    }
+  ],
+  "best_regret_per_buyer": 0.079165980219841,
+  "note": "belief-conditioned NPG (score-function), input=infostate (M2), env=single, belief=faithful. Single-good ladder: memoryless +0.244 <= belief <= opponent-observed non-clairvoyant +0.448."
+}

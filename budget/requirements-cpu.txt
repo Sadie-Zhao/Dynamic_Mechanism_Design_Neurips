@@ -1,0 +1,8 @@
+jax[cpu]==0.4.38
+dm-haiku==0.0.13
+flax==0.10.2
+optax==0.2.4
+numpy==1.26.4
+matplotlib==3.9.4
+PyYAML==6.0.2
+pytest==8.3.5

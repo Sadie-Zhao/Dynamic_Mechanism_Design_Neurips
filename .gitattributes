@@ -1,0 +1,2 @@
+# Preserve exact bytes for archived source/result integrity checks on every OS.
+* -text

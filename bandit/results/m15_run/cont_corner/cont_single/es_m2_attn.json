@@ -1,0 +1,47 @@
+{
+  "experiment": "cont_single",
+  "oracle": "ES-m2-attn",
+  "info": "m2",
+  "arch": "attn",
+  "run_dir": "outputs/cont_single/ckpt_best",
+  "sigma": 0.05,
+  "popsize": 128,
+  "gens": 300,
+  "best_regret_per_buyer": 0.0003110882535111159,
+  "per_restart": [
+    {
+      "restart": 0,
+      "heldout_per_buyer": -0.00015068483480717987
+    },
+    {
+      "restart": 1,
+      "heldout_per_buyer": 0.00014741216727998108
+    },
+    {
+      "restart": 2,
+      "heldout_per_buyer": -0.00015068483480717987
+    },
+    {
+      "restart": 3,
+      "heldout_per_buyer": 0.0003110882535111159
+    }
+  ],
+  "config": {
+    "run_dir": "outputs/cont_single/ckpt_best",
+    "out": "/home/ubuntu/cdmd/results/cont_corner/cont_single/es_m2_attn.json",
+    "env": "single",
+    "info": "m2",
+    "arch": "attn",
+    "hidden": 128,
+    "gens": 300,
+    "pophalf": 64,
+    "sigma": 0.05,
+    "lr": 0.02,
+    "restarts": 4,
+    "samples": 128,
+    "eval_samples": 20000,
+    "eval_every": 15,
+    "seed": 42
+  },
+  "note": "continuous OpenAI-ES (gradient-free, antithetic + centered-rank shaping); PER BUYER"
+}

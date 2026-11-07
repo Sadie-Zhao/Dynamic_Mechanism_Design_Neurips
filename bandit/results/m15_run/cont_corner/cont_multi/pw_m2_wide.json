@@ -1,0 +1,53 @@
+{
+  "experiment": "cont_multi",
+  "oracle": "pathwise-m2-wide",
+  "info": "m2",
+  "arch": "wide",
+  "run_dir": "outputs/cont_multi/ckpt_best",
+  "restarts": 8,
+  "steps": 1500,
+  "best_heldout_regret_per_buyer": 0.010105343535542488,
+  "per_restart": [
+    {
+      "restart": 0,
+      "train_max_sum": 0.025971626862883568,
+      "heldout_per_buyer": 0.010105343535542488
+    },
+    {
+      "restart": 1,
+      "train_max_sum": 0.024892320856451988,
+      "heldout_per_buyer": 0.009061973541975021
+    },
+    {
+      "restart": 2,
+      "train_max_sum": 0.02596322074532509,
+      "heldout_per_buyer": 0.009732432663440704
+    },
+    {
+      "restart": 3,
+      "train_max_sum": 0.02833539992570877,
+      "heldout_per_buyer": 0.009950883686542511
+    },
+    {
+      "restart": 4,
+      "train_max_sum": 0.025751439854502678,
+      "heldout_per_buyer": 0.010057900100946426
+    },
+    {
+      "restart": 5,
+      "train_max_sum": 0.02777937799692154,
+      "heldout_per_buyer": 0.00959909986704588
+    },
+    {
+      "restart": 6,
+      "train_max_sum": 0.025658922269940376,
+      "heldout_per_buyer": 0.009505878202617168
+    },
+    {
+      "restart": 7,
+      "train_max_sum": 0.02516707219183445,
+      "heldout_per_buyer": 0.009893354959785938
+    }
+  ],
+  "note": "continuous pathwise (reparam BPTT) + Adam; MAX regret over steps; held-out; PER BUYER"
+}

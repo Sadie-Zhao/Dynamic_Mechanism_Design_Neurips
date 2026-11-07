@@ -1,0 +1,115 @@
+{
+  "state": "target_complete",
+  "target": 3.2,
+  "strong": null,
+  "attained": false,
+  "regular": [
+    {
+      "candidate_index": 0,
+      "trial_index": 0,
+      "epoch": 750,
+      "target": 3.2,
+      "mechanism_artifact": "target_00/candidate_epoch0750.pkl",
+      "ic_upper": 0.04104912281036377,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.1314501762390137,
+        "std": 0.04013853892683983,
+        "se": 0.020069269463419914,
+        "ci95": [
+          3.0921144080907106,
+          3.1707859443873168
+        ],
+        "num_batches": 4,
+        "min": 3.0777902603149414,
+        "max": 3.175027847290039,
+        "median": 3.136491298675537
+      },
+      "raw_validation_revenue_batches": [
+        3.0777902603149414,
+        3.135063409805298,
+        3.1379194259643555,
+        3.175027847290039
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_00/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 1,
+      "trial_index": 0,
+      "epoch": 1500,
+      "target": 3.2,
+      "mechanism_artifact": "target_00/candidate_epoch1500.pkl",
+      "ic_upper": 0.040432512760162354,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.1443185806274414,
+        "std": 0.06314265727996826,
+        "se": 0.03157132863998413,
+        "ci95": [
+          3.0824387764930723,
+          3.2061983847618105
+        ],
+        "num_batches": 4,
+        "min": 3.0766537189483643,
+        "max": 3.2081704139709473,
+        "median": 3.1462252140045166
+      },
+      "raw_validation_revenue_batches": [
+        3.1868338584899902,
+        3.2081704139709473,
+        3.0766537189483643,
+        3.105616569519043
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_01/regular/selected.pkl"
+    }
+  ],
+  "final": null,
+  "independent_final_tests": 0,
+  "cold_start": true,
+  "epochs": 1500,
+  "case_id": "e2_A_wide_s01_t00",
+  "logical_case": "e2_A_wide_s01",
+  "unit_kind": "target",
+  "phase": "capacity_matched_cold_main",
+  "claim": "Finite development-informed target search; not certified IC, optimality or infeasibility"
+}

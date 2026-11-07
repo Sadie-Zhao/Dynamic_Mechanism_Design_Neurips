@@ -1,0 +1,54 @@
+{
+  "best_validation_gain": 0.0005884782294742763,
+  "best_step": 275,
+  "history": [
+    {
+      "step": 25,
+      "validation_gain": 0.0001501896040281281
+    },
+    {
+      "step": 50,
+      "validation_gain": 0.00045877168304286897
+    },
+    {
+      "step": 75,
+      "validation_gain": 0.0005777476471848786
+    },
+    {
+      "step": 100,
+      "validation_gain": 0.0004779876908287406
+    },
+    {
+      "step": 125,
+      "validation_gain": 0.0005096661625429988
+    },
+    {
+      "step": 150,
+      "validation_gain": 0.000497522356454283
+    },
+    {
+      "step": 175,
+      "validation_gain": 0.0005187162314541638
+    },
+    {
+      "step": 200,
+      "validation_gain": 0.0005404765834100544
+    },
+    {
+      "step": 225,
+      "validation_gain": 0.0005800850922241807
+    },
+    {
+      "step": 250,
+      "validation_gain": 0.0005773326847702265
+    },
+    {
+      "step": 275,
+      "validation_gain": 0.0005884782294742763
+    },
+    {
+      "step": 300,
+      "validation_gain": 0.0005421565729193389
+    }
+  ]
+}

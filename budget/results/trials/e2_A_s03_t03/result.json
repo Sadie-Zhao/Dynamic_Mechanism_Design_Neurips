@@ -1,0 +1,273 @@
+{
+  "state": "target_complete",
+  "case_id": "e2_A_s03_t03",
+  "logical_case": "e2_A_s03",
+  "original_unit": "e2_A_s03_t03",
+  "unit_kind": "target",
+  "target": 3.5,
+  "strong": null,
+  "attained": false,
+  "regular": [
+    {
+      "candidate_index": 2,
+      "trial_index": 0,
+      "epoch": 500,
+      "target": 3.5,
+      "mechanism_artifact": "target_00/candidate_epoch0500.pkl",
+      "ic_upper": 0.05257484316825867,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.3057379722595215,
+        "std": 0.04361658915877342,
+        "se": 0.02180829457938671,
+        "ci95": [
+          3.2629937148839234,
+          3.3484822296351195
+        ],
+        "num_batches": 4,
+        "min": 3.263909339904785,
+        "max": 3.3491616249084473,
+        "median": 3.3049402236938477
+      },
+      "raw_validation_revenue_batches": [
+        3.3371169567108154,
+        3.3491616249084473,
+        3.263909339904785,
+        3.272763252258301
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_02/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 0,
+      "trial_index": 0,
+      "epoch": 750,
+      "target": 3.5,
+      "mechanism_artifact": "target_00/candidate_epoch0750.pkl",
+      "ic_upper": 0.04848413169384003,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.2897167205810547,
+        "std": 0.08422954380512238,
+        "se": 0.04211477190256119,
+        "ci95": [
+          3.2071717676520346,
+          3.3722616735100748
+        ],
+        "num_batches": 4,
+        "min": 3.1944096088409424,
+        "max": 3.384366989135742,
+        "median": 3.2900450229644775
+      },
+      "raw_validation_revenue_batches": [
+        3.33030366897583,
+        3.384366989135742,
+        3.1944096088409424,
+        3.249786376953125
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_00/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 3,
+      "trial_index": 0,
+      "epoch": 1000,
+      "target": 3.5,
+      "mechanism_artifact": "target_00/candidate_epoch1000.pkl",
+      "ic_upper": 0.04380985349416733,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.3410680294036865,
+        "std": 0.07576672732830048,
+        "se": 0.03788336366415024,
+        "ci95": [
+          3.266816636621952,
+          3.415319422185421
+        ],
+        "num_batches": 4,
+        "min": 3.2677783966064453,
+        "max": 3.4470911026000977,
+        "median": 3.3247013092041016
+      },
+      "raw_validation_revenue_batches": [
+        3.31862735748291,
+        3.330775022506714,
+        3.4470911026000977,
+        3.2677783966064453
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_03/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 4,
+      "trial_index": 0,
+      "epoch": 1250,
+      "target": 3.5,
+      "mechanism_artifact": "target_00/candidate_epoch1250.pkl",
+      "ic_upper": 0.04582728445529938,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.300353527069092,
+        "std": 0.10880125313997269,
+        "se": 0.05440062656998634,
+        "ci95": [
+          3.1937282989919185,
+          3.406978755146265
+        ],
+        "num_batches": 4,
+        "min": 3.163987636566162,
+        "max": 3.4247124195098877,
+        "median": 3.306356906890869
+      },
+      "raw_validation_revenue_batches": [
+        3.4247124195098877,
+        3.2800865173339844,
+        3.332627296447754,
+        3.163987636566162
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_04/regular/selected.pkl"
+    },
+    {
+      "candidate_index": 1,
+      "trial_index": 0,
+      "epoch": 1500,
+      "target": 3.5,
+      "mechanism_artifact": "target_00/candidate_epoch1500.pkl",
+      "ic_upper": 0.04554872587323189,
+      "observed_feasible": true,
+      "revenue": {
+        "mean": 3.283193349838257,
+        "std": 0.07378867268562317,
+        "se": 0.036894336342811584,
+        "ci95": [
+          3.210880450606346,
+          3.3555062490701677
+        ],
+        "num_batches": 4,
+        "min": 3.190915822982788,
+        "max": 3.357835292816162,
+        "median": 3.292011260986328
+      },
+      "raw_validation_revenue_batches": [
+        3.324354887008667,
+        3.25966739654541,
+        3.190915822982788,
+        3.357835292816162
+      ],
+      "raw_validation_feasibility": {
+        "budget_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ir_loss": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "regular_artifact": "candidate_01/regular/selected.pkl"
+    }
+  ],
+  "strong_attempts": [],
+  "screen_ranking": [],
+  "final": null,
+  "independent_final_tests": 0,
+  "cold_start": true,
+  "epochs": 1500,
+  "selection_mode": "train",
+  "checkpoint_epochs": [
+    500,
+    750,
+    1000,
+    1250,
+    1500
+  ],
+  "phase": "capacity_matched_five_checkpoint_selection",
+  "claim": "Finite adaptive validation selection; not certified IC, optimality or infeasibility"
+}

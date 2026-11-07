@@ -1,0 +1,48 @@
+{
+  "experiment": "discrete_single",
+  "oracle": "ES-m15-wide",
+  "info": "m15",
+  "arch": "wide",
+  "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+  "sigma": 0.05,
+  "popsize": 128,
+  "gens": 300,
+  "best_regret_per_buyer": 0.043472547084093094,
+  "per_restart": [
+    {
+      "restart": 0,
+      "heldout_per_buyer": 0.043472547084093094
+    },
+    {
+      "restart": 1,
+      "heldout_per_buyer": 0.021699892356991768
+    },
+    {
+      "restart": 2,
+      "heldout_per_buyer": 0.017556652426719666
+    },
+    {
+      "restart": 3,
+      "heldout_per_buyer": 0.02011030726134777
+    }
+  ],
+  "config": {
+    "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+    "out": "/home/ubuntu/cdmd/results/dm15/dS_Ap_m15/es_m15_wide.json",
+    "env": "single",
+    "info": "m15",
+    "arch": "wide",
+    "proto": 3.0,
+    "hidden": 128,
+    "gens": 300,
+    "pophalf": 64,
+    "sigma": 0.05,
+    "lr": 0.02,
+    "restarts": 4,
+    "samples": 128,
+    "eval_samples": 20000,
+    "eval_every": 15,
+    "seed": 42
+  },
+  "note": "discrete OpenAI-ES (gradient-free, antithetic + centered-rank); faithful belief; PER BUYER"
+}

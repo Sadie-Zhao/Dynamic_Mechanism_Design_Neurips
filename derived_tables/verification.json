@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "source_artifacts": 735,
+  "python_files_parsed": 80,
+  "budget_selections": 24,
+  "bandit_cells": 128,
+  "main_table_checked": true,
+  "failures": [],
+  "scope": "Read-only artifact checks and table export; no numerical experiments or checkpoint loading."
+}

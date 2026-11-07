@@ -1,0 +1,490 @@
+[
+  {
+    "unit": "e1_A_s01_t00",
+    "config": "budget/configs/e1_A_s01_t00.json"
+  },
+  {
+    "unit": "e1_A_s01_t02",
+    "config": "budget/configs/e1_A_s01_t02.json"
+  },
+  {
+    "unit": "e1_A_s02_t00",
+    "config": "budget/configs/e1_A_s02_t00.json"
+  },
+  {
+    "unit": "e1_A_s02_t01",
+    "config": "budget/configs/e1_A_s02_t01.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_t00",
+    "config": "budget/configs/e1_A_wide_s01_t00.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_t01",
+    "config": "budget/configs/e1_A_wide_s01_t01.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_t02",
+    "config": "budget/configs/e1_A_wide_s01_t02.json"
+  },
+  {
+    "unit": "e1_A_wide_s02_t00",
+    "config": "budget/configs/e1_A_wide_s02_t00.json"
+  },
+  {
+    "unit": "e1_B_s01_t00",
+    "config": "budget/configs/e1_B_s01_t00.json"
+  },
+  {
+    "unit": "e1_B_s01_t01",
+    "config": "budget/configs/e1_B_s01_t01.json"
+  },
+  {
+    "unit": "e1_C_s01_t00",
+    "config": "budget/configs/e1_C_s01_t00.json"
+  },
+  {
+    "unit": "e1_C_s01_t01",
+    "config": "budget/configs/e1_C_s01_t01.json"
+  },
+  {
+    "unit": "e2_A_s01_t00",
+    "config": "budget/configs/e2_A_s01_t00.json"
+  },
+  {
+    "unit": "e2_A_s01_t01",
+    "config": "budget/configs/e2_A_s01_t01.json"
+  },
+  {
+    "unit": "e2_A_s01_t02",
+    "config": "budget/configs/e2_A_s01_t02.json"
+  },
+  {
+    "unit": "e2_A_s02_t00",
+    "config": "budget/configs/e2_A_s02_t00.json"
+  },
+  {
+    "unit": "e2_A_wide_s01_t00",
+    "config": "budget/configs/e2_A_wide_s01_t00.json"
+  },
+  {
+    "unit": "e2_A_wide_s01_t01",
+    "config": "budget/configs/e2_A_wide_s01_t01.json"
+  },
+  {
+    "unit": "e2_B_s01_t00",
+    "config": "budget/configs/e2_B_s01_t00.json"
+  },
+  {
+    "unit": "e2_B_s01_t01",
+    "config": "budget/configs/e2_B_s01_t01.json"
+  },
+  {
+    "unit": "e2_C_s01_t00",
+    "config": "budget/configs/e2_C_s01_t00.json"
+  },
+  {
+    "unit": "e2_C_s01_t01",
+    "config": "budget/configs/e2_C_s01_t01.json"
+  },
+  {
+    "unit": "e1_B_s02_t00",
+    "config": "budget/configs/e1_B_s02_t00.json"
+  },
+  {
+    "unit": "e1_C_s02_t00",
+    "config": "budget/configs/e1_C_s02_t00.json"
+  },
+  {
+    "unit": "e2_A_wide_s02_t00",
+    "config": "budget/configs/e2_A_wide_s02_t00.json"
+  },
+  {
+    "unit": "e2_B_s02_t00",
+    "config": "budget/configs/e2_B_s02_t00.json"
+  },
+  {
+    "unit": "e2_C_s02_t00",
+    "config": "budget/configs/e2_C_s02_t00.json"
+  },
+  {
+    "unit": "e1_A_s01_t02__select5",
+    "config": "budget/configs/e1_A_s01_t02__select5.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_t02__select5",
+    "config": "budget/configs/e1_A_wide_s01_t02__select5.json"
+  },
+  {
+    "unit": "e1_B_s01_t02",
+    "config": "budget/configs/e1_B_s01_t02.json"
+  },
+  {
+    "unit": "e1_C_s01_t02",
+    "config": "budget/configs/e1_C_s01_t02.json"
+  },
+  {
+    "unit": "e2_A_s01_t02__select5",
+    "config": "budget/configs/e2_A_s01_t02__select5.json"
+  },
+  {
+    "unit": "e2_A_wide_s01_t02",
+    "config": "budget/configs/e2_A_wide_s01_t02.json"
+  },
+  {
+    "unit": "e2_B_s01_t02",
+    "config": "budget/configs/e2_B_s01_t02.json"
+  },
+  {
+    "unit": "e2_C_s01_t02",
+    "config": "budget/configs/e2_C_s01_t02.json"
+  },
+  {
+    "unit": "e1_A_s02_t02",
+    "config": "budget/configs/e1_A_s02_t02.json"
+  },
+  {
+    "unit": "e1_A_wide_s02_t01",
+    "config": "budget/configs/e1_A_wide_s02_t01.json"
+  },
+  {
+    "unit": "e1_A_wide_s02_t02",
+    "config": "budget/configs/e1_A_wide_s02_t02.json"
+  },
+  {
+    "unit": "e1_B_s02_t01",
+    "config": "budget/configs/e1_B_s02_t01.json"
+  },
+  {
+    "unit": "e1_C_s02_t01",
+    "config": "budget/configs/e1_C_s02_t01.json"
+  },
+  {
+    "unit": "e2_A_s02_t01",
+    "config": "budget/configs/e2_A_s02_t01.json"
+  },
+  {
+    "unit": "e2_A_s02_t02",
+    "config": "budget/configs/e2_A_s02_t02.json"
+  },
+  {
+    "unit": "e2_A_wide_s02_t01",
+    "config": "budget/configs/e2_A_wide_s02_t01.json"
+  },
+  {
+    "unit": "e2_A_wide_s02_t02",
+    "config": "budget/configs/e2_A_wide_s02_t02.json"
+  },
+  {
+    "unit": "e2_B_s02_t01",
+    "config": "budget/configs/e2_B_s02_t01.json"
+  },
+  {
+    "unit": "e2_C_s02_t01",
+    "config": "budget/configs/e2_C_s02_t01.json"
+  },
+  {
+    "unit": "e1_A_s03_t00",
+    "config": "budget/configs/e1_A_s03_t00.json"
+  },
+  {
+    "unit": "e1_A_wide_s03_t00",
+    "config": "budget/configs/e1_A_wide_s03_t00.json"
+  },
+  {
+    "unit": "e2_A_s03_t00",
+    "config": "budget/configs/e2_A_s03_t00.json"
+  },
+  {
+    "unit": "e2_A_wide_s03_t00",
+    "config": "budget/configs/e2_A_wide_s03_t00.json"
+  },
+  {
+    "unit": "e1_A_s03_t01",
+    "config": "budget/configs/e1_A_s03_t01.json"
+  },
+  {
+    "unit": "e1_A_wide_s03_t01",
+    "config": "budget/configs/e1_A_wide_s03_t01.json"
+  },
+  {
+    "unit": "e1_B_s03_t01",
+    "config": "budget/configs/e1_B_s03_t01.json"
+  },
+  {
+    "unit": "e1_C_s03_t01",
+    "config": "budget/configs/e1_C_s03_t01.json"
+  },
+  {
+    "unit": "e2_A_s03_t01",
+    "config": "budget/configs/e2_A_s03_t01.json"
+  },
+  {
+    "unit": "e2_A_wide_s03_t01",
+    "config": "budget/configs/e2_A_wide_s03_t01.json"
+  },
+  {
+    "unit": "e2_B_s03_t01",
+    "config": "budget/configs/e2_B_s03_t01.json"
+  },
+  {
+    "unit": "e2_C_s03_t01",
+    "config": "budget/configs/e2_C_s03_t01.json"
+  },
+  {
+    "unit": "e1_A_s03_t02",
+    "config": "budget/configs/e1_A_s03_t02.json"
+  },
+  {
+    "unit": "e1_A_wide_s03_t02",
+    "config": "budget/configs/e1_A_wide_s03_t02.json"
+  },
+  {
+    "unit": "e1_B_s03_t02",
+    "config": "budget/configs/e1_B_s03_t02.json"
+  },
+  {
+    "unit": "e1_C_s03_t02",
+    "config": "budget/configs/e1_C_s03_t02.json"
+  },
+  {
+    "unit": "e2_A_s03_t02",
+    "config": "budget/configs/e2_A_s03_t02.json"
+  },
+  {
+    "unit": "e2_A_wide_s03_t02",
+    "config": "budget/configs/e2_A_wide_s03_t02.json"
+  },
+  {
+    "unit": "e2_B_s03_t02",
+    "config": "budget/configs/e2_B_s03_t02.json"
+  },
+  {
+    "unit": "e2_C_s03_t02",
+    "config": "budget/configs/e2_C_s03_t02.json"
+  },
+  {
+    "unit": "e2_A_s01_t01__select5",
+    "config": "budget/configs/e2_A_s01_t01__select5.json"
+  },
+  {
+    "unit": "e2_A_wide_s01_t01__select5",
+    "config": "budget/configs/e2_A_wide_s01_t01__select5.json"
+  },
+  {
+    "unit": "e2_B_s01_t01__select5",
+    "config": "budget/configs/e2_B_s01_t01__select5.json"
+  },
+  {
+    "unit": "e2_C_s01_t01__select5",
+    "config": "budget/configs/e2_C_s01_t01__select5.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_t01__select5",
+    "config": "budget/configs/e1_A_wide_s01_t01__select5.json"
+  },
+  {
+    "unit": "e1_B_s01_t01__select5",
+    "config": "budget/configs/e1_B_s01_t01__select5.json"
+  },
+  {
+    "unit": "e1_C_s01_t01__select5",
+    "config": "budget/configs/e1_C_s01_t01__select5.json"
+  },
+  {
+    "unit": "e1_A_s02_t00__select5",
+    "config": "budget/configs/e1_A_s02_t00__select5.json"
+  },
+  {
+    "unit": "e1_A_wide_s02_t00__select5",
+    "config": "budget/configs/e1_A_wide_s02_t00__select5.json"
+  },
+  {
+    "unit": "e2_A_s02_t00__select5",
+    "config": "budget/configs/e2_A_s02_t00__select5.json"
+  },
+  {
+    "unit": "e2_A_wide_s01_t00__select5",
+    "config": "budget/configs/e2_A_wide_s01_t00__select5.json"
+  },
+  {
+    "unit": "e2_B_s01_t00__select5",
+    "config": "budget/configs/e2_B_s01_t00__select5.json"
+  },
+  {
+    "unit": "e2_C_s01_t00__select5",
+    "config": "budget/configs/e2_C_s01_t00__select5.json"
+  },
+  {
+    "unit": "e1_A_s01_t00__select5",
+    "config": "budget/configs/e1_A_s01_t00__select5.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_t00__select5",
+    "config": "budget/configs/e1_A_wide_s01_t00__select5.json"
+  },
+  {
+    "unit": "e1_B_s01_t00__select5",
+    "config": "budget/configs/e1_B_s01_t00__select5.json"
+  },
+  {
+    "unit": "e1_C_s01_t00__select5",
+    "config": "budget/configs/e1_C_s01_t00__select5.json"
+  },
+  {
+    "unit": "e2_A_s01_t00__select5",
+    "config": "budget/configs/e2_A_s01_t00__select5.json"
+  },
+  {
+    "unit": "e1_C_s03_t00",
+    "config": "budget/configs/e1_C_s03_t00.json"
+  },
+  {
+    "unit": "e2_C_s03_t00",
+    "config": "budget/configs/e2_C_s03_t00.json"
+  },
+  {
+    "unit": "e1_A_s02_t01__select5",
+    "config": "budget/configs/e1_A_s02_t01__select5.json"
+  },
+  {
+    "unit": "e2_C_s02_t02",
+    "config": "budget/configs/e2_C_s02_t02.json"
+  },
+  {
+    "unit": "e2_A_s01_final",
+    "config": "budget/configs/e2_A_s01_final.json"
+  },
+  {
+    "unit": "e2_A_wide_s01_final",
+    "config": "budget/configs/e2_A_wide_s01_final.json"
+  },
+  {
+    "unit": "e2_B_s01_final",
+    "config": "budget/configs/e2_B_s01_final.json"
+  },
+  {
+    "unit": "e2_C_s01_final",
+    "config": "budget/configs/e2_C_s01_final.json"
+  },
+  {
+    "unit": "e1_A_s01_final",
+    "config": "budget/configs/e1_A_s01_final.json"
+  },
+  {
+    "unit": "e1_A_wide_s01_final",
+    "config": "budget/configs/e1_A_wide_s01_final.json"
+  },
+  {
+    "unit": "e1_B_s01_final",
+    "config": "budget/configs/e1_B_s01_final.json"
+  },
+  {
+    "unit": "e1_C_s01_final",
+    "config": "budget/configs/e1_C_s01_final.json"
+  },
+  {
+    "unit": "e1_B_s02_t02",
+    "config": "budget/configs/e1_B_s02_t02.json"
+  },
+  {
+    "unit": "e1_C_s02_t02",
+    "config": "budget/configs/e1_C_s02_t02.json"
+  },
+  {
+    "unit": "e2_B_s02_t02",
+    "config": "budget/configs/e2_B_s02_t02.json"
+  },
+  {
+    "unit": "e1_A_s01_t01__select5",
+    "config": "budget/configs/e1_A_s01_t01__select5.json"
+  },
+  {
+    "unit": "e1_B_s03_t00",
+    "config": "budget/configs/e1_B_s03_t00.json"
+  },
+  {
+    "unit": "e2_B_s03_t00",
+    "config": "budget/configs/e2_B_s03_t00.json"
+  },
+  {
+    "unit": "e2_A_s02_t03",
+    "config": "budget/configs/e2_A_s02_t03.json"
+  },
+  {
+    "unit": "e2_A_wide_s02_t03",
+    "config": "budget/configs/e2_A_wide_s02_t03.json"
+  },
+  {
+    "unit": "e2_B_s02_t03",
+    "config": "budget/configs/e2_B_s02_t03.json"
+  },
+  {
+    "unit": "e2_C_s02_t03",
+    "config": "budget/configs/e2_C_s02_t03.json"
+  },
+  {
+    "unit": "e2_A_s03_t03",
+    "config": "budget/configs/e2_A_s03_t03.json"
+  },
+  {
+    "unit": "e2_A_wide_s03_t03",
+    "config": "budget/configs/e2_A_wide_s03_t03.json"
+  },
+  {
+    "unit": "e2_B_s03_t03",
+    "config": "budget/configs/e2_B_s03_t03.json"
+  },
+  {
+    "unit": "e2_C_s03_t03",
+    "config": "budget/configs/e2_C_s03_t03.json"
+  },
+  {
+    "unit": "e2_A_refine500",
+    "config": "budget/configs/e2_A_refine500.json"
+  },
+  {
+    "unit": "e2_A_s02_lower31",
+    "config": "budget/configs/e2_A_s02_lower31.json"
+  },
+  {
+    "unit": "e2_A_s03_lower31",
+    "config": "budget/configs/e2_A_s03_lower31.json"
+  },
+  {
+    "unit": "e1_BtoA_distill500",
+    "config": "budget/configs/e1_BtoA_distill500.json"
+  },
+  {
+    "unit": "e1_CtoA_distill500",
+    "config": "budget/configs/e1_CtoA_distill500.json"
+  },
+  {
+    "unit": "e2_BtoA_distill500",
+    "config": "budget/configs/e2_BtoA_distill500.json"
+  },
+  {
+    "unit": "e2_C_refine500",
+    "config": "budget/configs/e2_C_refine500.json"
+  },
+  {
+    "unit": "e2_CtoA_distill500",
+    "config": "budget/configs/e2_CtoA_distill500.json"
+  },
+  {
+    "unit": "e1_BtoA_distill1000",
+    "config": "budget/configs/e1_BtoA_distill1000.json"
+  },
+  {
+    "unit": "e1_CtoA_distill1000",
+    "config": "budget/configs/e1_CtoA_distill1000.json"
+  },
+  {
+    "unit": "e2_BtoA_distill1000",
+    "config": "budget/configs/e2_BtoA_distill1000.json"
+  },
+  {
+    "unit": "e2_CtoA_distill1000",
+    "config": "budget/configs/e2_CtoA_distill1000.json"
+  }
+]

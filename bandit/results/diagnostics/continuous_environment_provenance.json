@@ -1,0 +1,212 @@
+{
+  "role": "source_and_saved_output_provenance_only_no_numerical_experiment",
+  "notebooks": {
+    "Copy of cont_single_colab.ipynb": {
+      "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\notebooks\\Copy of cont_single_colab.ipynb",
+      "sha256": "b749de7b76cb88ebf8bfb7331f7a78bd459930abf37679f7d0b12a7fddd059e0",
+      "factory": "create_cont_single_auction",
+      "environment": {
+        "n_buyers": 2,
+        "n_goods": 1,
+        "horizon": 5,
+        "discount": 0.9,
+        "type_mean": 2.5,
+        "type_std": 0.1,
+        "types_low": 0.0,
+        "types_high": 5.0,
+        "sigma_no": 0.0,
+        "trans_lambda": 3.0,
+        "allocation_cost": 0.1
+      },
+      "setup_cell": {
+        "cell_index_zero_based": 7,
+        "execution_count": 18,
+        "source": "# auction = create_cont_single_auction(\n#     n_buyers=2, n_goods=1, horizon=5, discount=0.9,\n#     type_mean=2.5, type_std=0.1, types_low=0.0, types_high=5.0,\n#     sigma_no=1e-2, trans_lambda=1.0, allocation_cost=0.1, seed=SEED,\n# )\n\nauction = create_cont_single_auction(\n    n_buyers       = 2,\n    n_goods        = 1,\n    horizon        = 5,\n    discount       = 0.9,\n    type_mean      = 2.5,\n    type_std       = 0.1,\n    types_low      = 0.0,\n    types_high     = 5.0,\n    sigma_no       = 0.0,\n    trans_lambda   = 3.0,\n    allocation_cost= 0.1,\n    seed           = SEED,\n)\nprint(f'Auction: {auction.num_buyers}B x {auction.num_goods}G x T={auction.num_horizons}')\nprint(f'Type range: [{auction.types_low}, {auction.types_high}]  sigma_no={auction.trans_sigma_no}')\n\ns0 = auction.get_initial_state(jax.random.PRNGKey(0))\nprint(f'Initial types: {s0.current_type}')",
+        "text_output": "Auction: 2B x 1G x T=5\nType range: [[[0.]\n [0.]], [[5.]\n [5.]]]  sigma_no=0.0\nInitial types: [[2.662264 ]\n [2.7025266]]\n"
+      },
+      "saved_final_evaluation_cell": {
+        "cell_index_zero_based": 23,
+        "execution_count": 26,
+        "source": "final_eval_keys = jax.random.split(jax.random.PRNGKey(88888), cfg['eval_num_keys'])\nfinal_results = eval_mechanism_multikey(\n    auction=auction,\n    mechanism_network=mechanism_network,\n    mechanism_params=best_mechanism_params,\n    profit_goal=PROFIT_GOAL,\n    num_samples=cfg['eval_num_samples'],\n    keys=final_eval_keys,\n    policy_network=policy_network,\n    policy_params=best_policy_params,\n    is_discrete=IS_DISCRETE,\n)\nprint_eval_report(final_results, prefix=f'{EXPERIMENT} best checkpoint (epoch {best[\"epoch\"]}): ')",
+        "text_output": "\n============================================================\n  cont_single best checkpoint (epoch 5700): Evaluation Report\n============================================================\n  profit                   : 9.6641 \u00b1 0.0166  [9.6324, 9.6912]\n  gap plus                 : 0.0425 \u00b1 0.0166  [0.0154, 0.0742]\n  buyer surplus            : 0.3690 \u00b1 0.0237  [0.3182, 0.4185]\n  ir loss                  : 0.0984 \u00b1 0.0096  [0.0732, 0.1152]\n  ic regret                : 0.0296 \u00b1 0.0053\n\n"
+      }
+    },
+    "cont_single_colab.ipynb": {
+      "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\notebooks\\cont_single_colab.ipynb",
+      "sha256": "1123c73d475796879743ce6e884c1ca7011c1af18c7f427048b435611ee92d39",
+      "factory": "create_cont_single_auction",
+      "environment": {
+        "n_buyers": 2,
+        "n_goods": 1,
+        "horizon": 5,
+        "discount": 0.9,
+        "type_mean": 2.5,
+        "type_std": 0.1,
+        "types_low": 0.0,
+        "types_high": 5.0,
+        "sigma_no": 0.0,
+        "trans_lambda": 3.0,
+        "allocation_cost": 0.1
+      },
+      "setup_cell": {
+        "cell_index_zero_based": 7,
+        "execution_count": 28,
+        "source": "# auction = create_cont_single_auction(\n#     n_buyers=2, n_goods=1, horizon=5, discount=0.9,\n#     type_mean=2.5, type_std=0.1, types_low=0.0, types_high=5.0,\n#     sigma_no=1e-2, trans_lambda=1.0, allocation_cost=0.1, seed=SEED,\n# )\n\nauction = create_cont_single_auction(\n    n_buyers       = 2,\n    n_goods        = 1,\n    horizon        = 5,\n    discount       = 0.9,\n    type_mean      = 2.5,\n    type_std       = 0.1,\n    types_low      = 0.0,\n    types_high     = 5.0,\n    sigma_no       = 0.0,\n    trans_lambda   = 3.0,\n    allocation_cost= 0.1,\n    seed           = SEED,\n)\nprint(f'Auction: {auction.num_buyers}B x {auction.num_goods}G x T={auction.num_horizons}')\nprint(f'Type range: [{auction.types_low}, {auction.types_high}]  sigma_no={auction.trans_sigma_no}')\n\ns0 = auction.get_initial_state(jax.random.PRNGKey(0))\nprint(f'Initial types: {s0.current_type}')",
+        "text_output": "Auction: 2B x 1G x T=5\nType range: [[[0.]\n [0.]], [[5.]\n [5.]]]  sigma_no=0.0\nInitial types: [[2.662264 ]\n [2.7025266]]\n"
+      },
+      "saved_final_evaluation_cell": {
+        "cell_index_zero_based": 23,
+        "execution_count": null,
+        "source": "final_eval_keys = jax.random.split(jax.random.PRNGKey(88888), cfg['eval_num_keys'])\nfinal_results = eval_mechanism_multikey(\n    auction=auction,\n    mechanism_network=mechanism_network,\n    mechanism_params=best_mechanism_params,\n    profit_goal=PROFIT_GOAL,\n    num_samples=cfg['eval_num_samples'],\n    keys=final_eval_keys,\n    policy_network=policy_network,\n    policy_params=best_policy_params,\n    is_discrete=IS_DISCRETE,\n)\nprint_eval_report(final_results, prefix=f'{EXPERIMENT} best checkpoint (epoch {best[\"epoch\"]}): ')",
+        "text_output": ""
+      }
+    },
+    "cont_multi_colab.ipynb": {
+      "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\notebooks\\cont_multi_colab.ipynb",
+      "sha256": "cb81c2410a9eb1f16b54c01b323edb43f78670ba4bbcd9cd08988e159cd8ba20",
+      "factory": "create_cont_multi_auction",
+      "environment": {
+        "n_buyers": 2,
+        "n_goods": 2,
+        "horizon": 5,
+        "discount": 0.9,
+        "type_mean": 2.5,
+        "type_std": 0.8,
+        "types_low": 0.0,
+        "types_high": 5.0,
+        "sigma_no": 0,
+        "trans_lambda": 1.0,
+        "allocation_cost": 0.1
+      },
+      "setup_cell": {
+        "cell_index_zero_based": 7,
+        "execution_count": 6,
+        "source": "auction = create_cont_multi_auction(\n    n_buyers=2, n_goods=2, horizon=5, discount=0.9,\n    type_mean=2.5, type_std=0.8, types_low=0.0, types_high=5.0,\n    sigma_no=0, trans_lambda=1.0, allocation_cost=0.1, seed=SEED,\n)\nprint(f'Auction: {auction.num_buyers}B x {auction.num_goods}G x T={auction.num_horizons}')\nprint(f'Type range: [{auction.types_low[0,0]}, {auction.types_high[0,0]}]  sigma_no={auction.trans_sigma_no}')\n\ns0 = auction.get_initial_state(jax.random.PRNGKey(0))\nprint(f'Initial types: {s0.current_type}')",
+        "text_output": "Auction: 2B x 2G x T=5\nType range: [0.0, 5.0]  sigma_no=0\nInitial types: [[3.7981138 4.1202116]\n [2.1531243 2.4371061]]\n"
+      },
+      "saved_final_evaluation_cell": {
+        "cell_index_zero_based": 23,
+        "execution_count": 34,
+        "source": "final_eval_keys = jax.random.split(jax.random.PRNGKey(88888), cfg['eval_num_keys'])\nfinal_results = eval_mechanism_multikey(\n    auction=auction,\n    mechanism_network=mechanism_network,\n    mechanism_params=best_mechanism_params,\n    profit_goal=PROFIT_GOAL,\n    num_samples=cfg['eval_num_samples'],\n    keys=final_eval_keys,\n    policy_network=policy_network,\n    policy_params=best_policy_params,\n    is_discrete=IS_DISCRETE,\n)\nprint_eval_report(final_results, prefix=f'{EXPERIMENT} best checkpoint (epoch {best[\"epoch\"]}): ')",
+        "text_output": "\n============================================================\n  cont_multi best checkpoint (epoch 250): Evaluation Report\n============================================================\n  profit                   : 1.0403 \u00b1 0.0147  [1.0045, 1.0669]\n  gap plus                 : 10.4597 \u00b1 0.0147  [10.4331, 10.4955]\n  buyer surplus            : 12.4284 \u00b1 0.1163  [12.2267, 12.7556]\n  ir loss                  : 0.0000 \u00b1 0.0000  [0.0000, 0.0000]\n  ic regret                : 0.0047 \u00b1 0.0005\n\n"
+      }
+    }
+  },
+  "environment_comparisons": [
+    {
+      "mechanism": "cont_single",
+      "rebuttal_checkpoint_config": {
+        "path": "E:\\research\\projects\\Dynamic Mechanism Design\\code\\Bandit Auction Rebuttal\\mechanisms\\continuous\\cont_single\\ckpt_best\\config.yaml",
+        "sha256": "7c7adace81671fce6ca45a3697bdbbeb3ff0d1503eecf8cf454aae1d2247c238"
+      },
+      "notebook": "Copy of cont_single_colab.ipynb",
+      "environment_differences": {},
+      "generic_cli_config": {
+        "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\bandit_auction\\configs\\cont_single_acceptance.yaml",
+        "sha256": "a3979677e26b5db1043f6b900856a5965bdc79be5a822797aab06e6f885bcbaa"
+      },
+      "generic_config_differs_from_notebook": {
+        "type_std": {
+          "notebook": 0.1,
+          "generic_cli": 0.8
+        },
+        "sigma_no": {
+          "notebook": 0.0,
+          "generic_cli": 1.0
+        },
+        "trans_lambda": {
+          "notebook": 3.0,
+          "generic_cli": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "cont_multi",
+      "rebuttal_checkpoint_config": {
+        "path": "E:\\research\\projects\\Dynamic Mechanism Design\\code\\Bandit Auction Rebuttal\\mechanisms\\continuous\\cont_multi\\ckpt_best\\config.yaml",
+        "sha256": "7583e7cf264e57cde74cad3e2ce231b808efb05a77910c57504173f4a8fdfbee"
+      },
+      "notebook": "cont_multi_colab.ipynb",
+      "environment_differences": {
+        "type_std": {
+          "notebook": 0.8,
+          "rebuttal": 0.1
+        },
+        "trans_lambda": {
+          "notebook": 1.0,
+          "rebuttal": 3.0
+        }
+      },
+      "generic_cli_config": {
+        "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\bandit_auction\\configs\\cont_multi_acceptance.yaml",
+        "sha256": "8590870f8223dcdc13d8e90cc47c7cd584e4baca71a0f754f5e7033440e46312"
+      },
+      "generic_config_differs_from_notebook": {
+        "sigma_no": {
+          "notebook": 0,
+          "generic_cli": 1.0
+        }
+      }
+    }
+  ],
+  "current_source_comparisons": [
+    {
+      "drive": {
+        "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\bandit_auction\\core.py",
+        "sha256": "25afa571da0d4005b9b364a2bf36c91dfd3439a17272eb0c3074dba7d940fac6"
+      },
+      "rebuttal": {
+        "path": "E:\\research\\projects\\Dynamic Mechanism Design\\code\\Bandit Auction Rebuttal\\bandit_auction\\core.py",
+        "sha256": "42f519b128cc1e5e76655b749843ccd26f27abc1ad35b6896700ed106c245926"
+      },
+      "same_text_after_line_ending_normalization": true
+    },
+    {
+      "drive": {
+        "path": "G:\\My Drive\\My Research\\Dynamic Mechanism Design\\Bandit Auction\\bandit_auction\\mechanisms\\network.py",
+        "sha256": "a7b3ec15d2a91d4a0c10aeb48e85a76d4eb7c02856e3df0386e0c49214155cd0"
+      },
+      "rebuttal": {
+        "path": "E:\\research\\projects\\Dynamic Mechanism Design\\code\\Bandit Auction Rebuttal\\bandit_auction\\mechanisms\\network.py",
+        "sha256": "fab53462766471cc7c3fe9e3c09d6da1137538c563ad3541adb038478e86562b"
+      },
+      "same_text_after_line_ending_normalization": true
+    }
+  ],
+  "single_submitted_result_match": {
+    "notebook": "Copy of cont_single_colab.ipynb",
+    "selected_epoch": 5700,
+    "saved_profit_mean": 9.6641,
+    "saved_profit_batch_sd": 0.0166,
+    "saved_ir_mean": 0.0984,
+    "saved_ir_batch_sd": 0.0096,
+    "saved_regret_mean": 0.0296,
+    "saved_regret_batch_sd": 0.0053,
+    "paper_profit": "9.664 +/- 0.017",
+    "paper_ir": "0.098 +/- 0.010",
+    "paper_main_dic": "0.023 +/- 0.005",
+    "paper_appendix_dic": "0.030 +/- 0.005",
+    "finding": "Profit and IR round to the submitted row. Saved regret matches appendix rounding, not the main-table value. This is provenance evidence, not validation of the old oracle."
+  },
+  "multi_finding": "The inspected notebook explicitly uses type_std0.8,sigma_no0,lambda1; the rebuttal checkpoint declares0.1,0,3. Generic CLI YAML uses0.8,1,1 and is not authoritative for notebook execution. Exact notebook-to-paper11.779 row identity remains unverified; do not claim a revenue improvement on an unchanged environment.",
+  "rebuttal_replay_gap": {
+    "status": "UNRESOLVED; original authoritative values preserved",
+    "authoritative_revenues": [
+      9.265,
+      15.818
+    ],
+    "fresh_saved_checkpoint_revenues": [
+      9.288967072963715,
+      15.86002848
+    ],
+    "selector_source_limitation": "cont_ckpt_pick.py builds one auction from the first goal config, evaluates all candidate checkpoints with it, then copies the winning goal config. It never checks that environments agree. Original per-goal configs/logs are absent from the shipped checkpoint folders, so actual environment mismatch during selection is neither established nor ruled out.",
+    "historical_runtime": "Historical JAX0.4.28 CPU replay already agrees with0.4.38 within2e-6. Original GPU/dev-Haiku/source snapshot not reconstructed.",
+    "local_git_history": "A local read-only history query found one import commit for core.py and cont_ckpt_pick.py:74d49b89,2026-08-25. It does not recover the historical remote runtime/source.",
+    "next": "After cluster sign-in and budget GPU reconciliation, a bounded frozen-checkpoint GPU forward comparison can test device/runtime effects without training. Preserve old/fresh values separately; do not guess missing configs or launch mechanism retraining."
+  },
+  "limitations": [
+    "Notebook source and saved output may be stale; execution counts are evidence but not immutable runtime provenance.",
+    "No notebook was executed, no model optimized, no historical artifact altered.",
+    "Current source text agreement does not prove identity with the historical remote code used for rebuttal selection."
+  ]
+}

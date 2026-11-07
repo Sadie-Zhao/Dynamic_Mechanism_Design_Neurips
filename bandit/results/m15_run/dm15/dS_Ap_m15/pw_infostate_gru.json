@@ -1,0 +1,54 @@
+{
+  "experiment": "discrete_single",
+  "oracle": "pathwise-M2-gru",
+  "head": "infostate",
+  "arch": "gru",
+  "run_dir": "outputs_audit/dS_Ap_m15/goal_7.617",
+  "restarts": 8,
+  "steps": 1500,
+  "proto": 3.0,
+  "best_heldout_regret_per_buyer": 0.019346600398421288,
+  "per_restart": [
+    {
+      "restart": 0,
+      "train_max_sum": 0.07832735031843185,
+      "heldout_per_buyer": 0.00956303346902132
+    },
+    {
+      "restart": 1,
+      "train_max_sum": 0.0903739333152771,
+      "heldout_per_buyer": 0.0020934436470270157
+    },
+    {
+      "restart": 2,
+      "train_max_sum": 0.11299297958612442,
+      "heldout_per_buyer": 0.019346600398421288
+    },
+    {
+      "restart": 3,
+      "train_max_sum": 0.06098521128296852,
+      "heldout_per_buyer": -1.0306358490197454e-05
+    },
+    {
+      "restart": 4,
+      "train_max_sum": 0.08792194724082947,
+      "heldout_per_buyer": 0.007487779017537832
+    },
+    {
+      "restart": 5,
+      "train_max_sum": 0.07958514988422394,
+      "heldout_per_buyer": 0.0007684236043132842
+    },
+    {
+      "restart": 6,
+      "train_max_sum": 0.08027762919664383,
+      "heldout_per_buyer": 0.011303463019430637
+    },
+    {
+      "restart": 7,
+      "train_max_sum": 0.060560442507267,
+      "heldout_per_buyer": -0.004876323044300079
+    }
+  ],
+  "note": "pathwise Gumbel-straight-through + Adam reopt; MAX regret over steps; held-out; PER BUYER"
+}

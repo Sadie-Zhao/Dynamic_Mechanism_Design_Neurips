@@ -1,0 +1,59 @@
+{
+  "experiment": "cont_multi",
+  "oracle": "NPG-m1-mlp",
+  "info": "m1",
+  "arch": "mlp",
+  "run_dir": "outputs/cont_multi/ckpt_best",
+  "deviator": 0,
+  "sigma": 0.3,
+  "eta": 1.0,
+  "lam": 0.1,
+  "best_regret_per_buyer": 0.0026808755937963724,
+  "per_restart": [
+    {
+      "restart": 0,
+      "eval_regret_per_buyer": 0.0025002455804497004
+    },
+    {
+      "restart": 1,
+      "eval_regret_per_buyer": 0.0026808755937963724
+    },
+    {
+      "restart": 2,
+      "eval_regret_per_buyer": 0.001968327909708023
+    },
+    {
+      "restart": 3,
+      "eval_regret_per_buyer": 0.0018714126199483871
+    },
+    {
+      "restart": 4,
+      "eval_regret_per_buyer": 0.0007253241492435336
+    },
+    {
+      "restart": 5,
+      "eval_regret_per_buyer": 0.0023465792182832956
+    }
+  ],
+  "config": {
+    "run_dir": "outputs/cont_multi/ckpt_best",
+    "out": "/home/ubuntu/cdmd/results/cont_corner/cont_multi/npg_m1_mlp.json",
+    "env": "multi",
+    "info": "m1",
+    "arch": "mlp",
+    "deviator": 0,
+    "hidden": 128,
+    "sigma": 0.3,
+    "iters": 300,
+    "restarts": 6,
+    "episodes": 512,
+    "eval_episodes": 20000,
+    "eval_mid": 4000,
+    "eval_every": 30,
+    "eta": 1.0,
+    "lam": 0.1,
+    "kl": 0.02,
+    "seed": 42
+  },
+  "note": "continuous NPG (score-fn, Gaussian-in-logit), exact Woodbury Fisher solve; PER BUYER"
+}
